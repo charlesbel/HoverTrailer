@@ -15,7 +15,7 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <summary>
     /// Gets or sets a value indicating whether trailer downloading is enabled.
     /// </summary>
-    public bool EnableTrailerDownload { get; set; } = true;
+    public bool EnableTrailerDownload { get; set; } = false;
 
     /// <summary>
     /// Gets or sets the path to the yt-dlp executable.
@@ -67,12 +67,6 @@ public class PluginConfiguration : BasePluginConfiguration
     /// </summary>
     public bool EnableDebugLogging { get; set; } = false;
 
-    /// <summary>
-    /// Gets or sets the trailer source URL pattern for manual trailer downloads.
-    /// Use {movie_name} placeholder for the movie name.
-    /// Example: "https://www.youtube.com/results?search_query={movie_name}+trailer"
-    /// </summary>
-    public string TrailerSourcePattern { get; set; } = "";
 
     /// <summary>
     /// Validates the current configuration and throws ConfigurationException if invalid.
@@ -229,16 +223,6 @@ public class PluginConfiguration : BasePluginConfiguration
         return null;
     }
 
-    private static bool IsValidLanguageCode(string languageCode)
-    {
-        // Common language codes supported by TMDb
-        var validLanguageCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            "en", "es", "fr", "de", "it", "pt", "ru", "ja", "ko", "zh", "ar", "hi", "th", "tr", "pl", "nl", "sv", "da", "no", "fi", "he", "cs", "hu", "ro", "bg", "hr", "sk", "sl", "et", "lv", "lt", "mt", "ga", "cy", "eu", "ca", "gl", "ast", "br", "co", "eo", "ia", "ie", "io", "kl", "la", "lb", "mk", "sq", "is", "fo", "gd", "gv", "kw", "mi", "ms", "ml", "mr", "ne", "or", "pa", "sa", "sd", "si", "ta", "te", "ur", "bn", "gu", "kn", "as", "ks", "kok", "mai", "mni", "sat", "bho", "mag", "awa", "raj", "bgc", "hne", "gom", "new"
-        };
-
-        return validLanguageCodes.Contains(languageCode);
-    }
 
     private static bool IsValidTrailerQuality(string quality)
     {

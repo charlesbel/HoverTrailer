@@ -144,26 +144,30 @@ public class HoverTrailerController : ControllerBase
                 return NotFound(error);
             }
 
-            // Get trailers using extras like AutoTrailer
-            LoggingHelper.LogDebug(_logger, "Searching for trailers for movie: {MovieName} (ID: {MovieId})", movie.Name, movieId);
+            // Multi-source trailer detection with priority: Local → Remote → Downloaded
+            LoggingHelper.LogDebug(_logger, "Starting multi-source trailer detection for movie: {MovieName} (ID: {MovieId})", movie.Name, movieId);
             LoggingHelper.LogDebug(_logger, "Movie path: {MoviePath}", movie.Path ?? "null");
             LoggingHelper.LogDebug(_logger, "Movie directory: {MovieDirectory}", movie.Path != null ? System.IO.Path.GetDirectoryName(movie.Path) ?? "null" : "null");
 
-            var trailers = movie.GetExtras(new[] { ExtraType.Trailer });
-            LoggingHelper.LogDebug(_logger, "Found {TrailerCount} trailers for movie: {MovieName}", trailers.Count(), movie.Name);
+            TrailerInfo? trailerInfo = null;
 
-            // Log detailed information about each trailer found
-            var trailerList = trailers.ToList();
-            for (int i = 0; i < trailerList.Count; i++)
+            // Step 1: Check for local trailers using Jellyfin's GetExtras
+            LoggingHelper.LogDebug(_logger, "Step 1: Checking for local trailers...");
+            var localTrailers = movie.GetExtras(new[] { ExtraType.Trailer });
+            LoggingHelper.LogDebug(_logger, "Found {LocalTrailerCount} local trailers for movie: {MovieName}", localTrailers.Count(), movie.Name);
+
+            // Log detailed information about each local trailer found
+            var localTrailerList = localTrailers.ToList();
+            for (int i = 0; i < localTrailerList.Count; i++)
             {
-                var t = trailerList[i];
-                LoggingHelper.LogDebug(_logger, "Trailer {Index}: ID={TrailerId}, Name={TrailerName}, Path={TrailerPath}",
+                var t = localTrailerList[i];
+                LoggingHelper.LogDebug(_logger, "Local Trailer {Index}: ID={TrailerId}, Name={TrailerName}, Path={TrailerPath}",
                     i + 1, t.Id, t.Name, t.Path);
             }
 
-            var trailer = trailers.FirstOrDefault();
+            var localTrailer = localTrailers.FirstOrDefault();
 
-            if (trailer == null)
+            if (localTrailer != null)
             {
                 LoggingHelper.LogDebug(_logger, "No trailer found for movie: {MovieName} (ID: {MovieId})", movie.Name, movieId);
 
@@ -193,23 +197,16 @@ public class HoverTrailerController : ControllerBase
                     }
                 }
 
-                var error = new ErrorResponse("TRAILER_NOT_FOUND", "No trailer found for this movie", $"Movie '{movie.Name}' does not have any trailers")
+                var error = new ErrorResponse("TRAILER_NOT_FOUND", "No trailer found for this movie",
+                    $"Movie '{movie.Name}' does not have any local or remote trailers available")
                 {
                     RequestId = requestId
                 };
                 return NotFound(error);
             }
 
-            var trailerInfo = new TrailerInfo
-            {
-                Id = trailer.Id,
-                Name = trailer.Name,
-                Path = trailer.Path,
-                RunTimeTicks = trailer.RunTimeTicks,
-                HasSubtitles = trailer.GetMediaSources(false).Any(s => s.MediaStreams.Any(ms => ms.Type == MediaBrowser.Model.Entities.MediaStreamType.Subtitle))
-            };
-
-            LoggingHelper.LogDebug(_logger, "Successfully retrieved trailer info for movie: {MovieName} (ID: {MovieId})", movie.Name, movieId);
+            LoggingHelper.LogDebug(_logger, "Successfully retrieved {TrailerType} trailer info for movie: {MovieName} (ID: {MovieId})",
+                trailerInfo.TrailerType, movie.Name, movieId);
             return Ok(trailerInfo);
         }
         catch (UnauthorizedAccessException ex)
@@ -462,6 +459,39 @@ public class HoverTrailerController : ControllerBase
     }
 
     /// <summary>
+    /// Determines the source of a remote trailer URL.
+    /// </summary>
+    /// <param name="url">The trailer URL to analyze.</param>
+    /// <returns>A user-friendly source name.</returns>
+    private static string GetTrailerSource(string? url)
+    {
+        if (string.IsNullOrEmpty(url))
+            return "Unknown";
+
+        try
+        {
+            var uri = new Uri(url);
+            var host = uri.Host.ToLowerInvariant();
+
+            return host switch
+            {
+                var h when h.Contains("youtube.com") || h.Contains("youtu.be") => "YouTube",
+                var h when h.Contains("vimeo.com") => "Vimeo",
+                var h when h.Contains("dailymotion.com") => "Dailymotion",
+                var h when h.Contains("twitch.tv") => "Twitch",
+                var h when h.Contains("facebook.com") => "Facebook",
+                var h when h.Contains("instagram.com") => "Instagram",
+                var h when h.Contains("tiktok.com") => "TikTok",
+                _ => host
+            };
+        }
+        catch (UriFormatException)
+        {
+            return "External";
+        }
+    }
+
+    /// <summary>
     /// Generates a unique request ID for tracking purposes.
     /// </summary>
     /// <returns>A unique request identifier.</returns>
@@ -469,6 +499,27 @@ public class HoverTrailerController : ControllerBase
     {
         return $"REQ_{DateTime.UtcNow:yyyyMMddHHmmss}_{Guid.NewGuid():N}";
     }
+}
+
+/// <summary>
+/// Trailer types supported by the plugin.
+/// </summary>
+public enum TrailerType
+{
+    /// <summary>
+    /// Local trailer file stored on the server.
+    /// </summary>
+    Local,
+
+    /// <summary>
+    /// Remote trailer (e.g., YouTube) referenced by Jellyfin.
+    /// </summary>
+    Remote,
+
+    /// <summary>
+    /// Trailer downloaded via yt-dlp.
+    /// </summary>
+    Downloaded
 }
 
 /// <summary>
@@ -487,7 +538,7 @@ public class TrailerInfo
     public string? Name { get; set; }
 
     /// <summary>
-    /// Gets or sets the trailer path.
+    /// Gets or sets the trailer path or URL.
     /// </summary>
     public string? Path { get; set; }
 
@@ -497,9 +548,29 @@ public class TrailerInfo
     public long? RunTimeTicks { get; set; }
 
     /// <summary>
+    /// Gets or sets the duration in seconds (derived from RunTimeTicks).
+    /// </summary>
+    public int? Duration => RunTimeTicks.HasValue ? (int?)(RunTimeTicks.Value / TimeSpan.TicksPerSecond) : null;
+
+    /// <summary>
     /// Gets or sets a value indicating whether the trailer has subtitles.
     /// </summary>
     public bool HasSubtitles { get; set; }
+
+    /// <summary>
+    /// Gets or sets the trailer type.
+    /// </summary>
+    public TrailerType TrailerType { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether this is a remote trailer.
+    /// </summary>
+    public bool IsRemote { get; set; }
+
+    /// <summary>
+    /// Gets or sets the trailer source description.
+    /// </summary>
+    public string Source { get; set; } = "Unknown";
 }
 
 /// <summary>

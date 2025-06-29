@@ -10,7 +10,10 @@
             <div class="content-primary">
                 <form id="HoverTrailerConfigForm">
                     <div class="sectionTitleContainer flex align-items-center">
-                        <h2 class="sectionTitle">HoverTrailer Configuration</h2>
+                        <h2 class="sectionTitle">Native Trailer Detection (Recommended)</h2>
+                    </div>
+                    <div class="fieldDescription" style="margin-bottom: 1em; padding: 0.5em; background-color: rgba(0, 255, 0, 0.1); border-left: 3px solid #90EE90;">
+                        <strong>✅ Recommended:</strong> This plugin automatically detects trailers already available in your Jellyfin library using Jellyfin's native API. This is the fastest and most reliable method that requires no additional configuration.
                     </div>
 
                     <div class="verticalSection">
@@ -47,13 +50,16 @@
 
                     <div class="verticalSection">
                         <div class="sectionTitleContainer flex align-items-center">
-                            <h3 class="sectionTitle">Download Settings</h3>
+                            <h3 class="sectionTitle">External Download (Advanced)</h3>
+                        </div>
+                        <div class="fieldDescription" style="margin-bottom: 1em; padding: 0.5em; background-color: rgba(255, 165, 0, 0.1); border-left: 3px solid #FFA500;">
+                            <strong>⚠️ Advanced Feature:</strong> These options enable downloading trailers from external sources using yt-dlp when local trailers are not available. This requires additional system resources and may have varying reliability.
                         </div>
                         <label class="emby-checkbox-label">
                             <input id="EnableTrailerDownload" name="EnableTrailerDownload" type="checkbox" is="emby-checkbox" />
                             <span>Enable Trailer Downloads</span>
                         </label>
-                        <div class="fieldDescription">Enable automatic downloading of movie trailers</div>
+                        <div class="fieldDescription">Enable downloading of movie trailers from external sources using yt-dlp when not found locally</div>
                         <div class="inputContainer">
                             <label class="inputLabel inputLabelUnfocused" for="PathToYtDlp">yt-dlp Path:</label>
                             <input id="PathToYtDlp" name="PathToYtDlp" type="text" is="emby-input" class="emby-input" />
@@ -89,13 +95,13 @@
 
                     <div class="verticalSection">
                         <div class="sectionTitleContainer flex align-items-center">
-                            <h3 class="sectionTitle">Scanning Settings</h3>
+                            <h3 class="sectionTitle">Automatic Scanning (Advanced)</h3>
                         </div>
                         <label class="emby-checkbox-label">
                             <input id="EnableAutoDownload" name="EnableAutoDownload" type="checkbox" is="emby-checkbox" />
                             <span>Enable Automatic Downloads</span>
                         </label>
-                        <div class="fieldDescription">Automatically download trailers for new movies during scanning</div>
+                        <div class="fieldDescription">Automatically download trailers from external sources for new movies during scanning (requires "Enable Trailer Downloads" above)</div>
                         <div class="inputContainer">
                             <label class="inputLabel inputLabelUnfocused" for="IntervalHours">Scan Interval (hours):</label>
                             <input id="IntervalHours" name="IntervalHours" type="number" min="1" max="168" is="emby-input" class="emby-input" />
