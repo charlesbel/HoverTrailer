@@ -48,6 +48,7 @@ public class HoverTrailerController : ControllerBase
     /// </summary>
     /// <returns>The client script.</returns>
     [HttpGet("ClientScript")]
+    [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -112,6 +113,7 @@ public class HoverTrailerController : ControllerBase
     /// <param name="movieId">The movie ID.</param>
     /// <returns>The trailer information.</returns>
     [HttpGet("TrailerInfo/{movieId}")]
+    [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
