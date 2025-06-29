@@ -18,8 +18,8 @@
                             <h3 class="sectionTitle">TMDb API Settings</h3>
                         </div>
                         <div class="inputContainer">
-                            <label class="inputLabel inputLabelUnfocused" for="TmdbApiKey">TMDb API Key:</label>
-                            <input id="TmdbApiKey" name="TmdbApiKey" type="password" is="emby-input" class="emby-input" />
+                            <label class="inputLabel inputLabelUnfocused" for="TMDbApiKey">TMDb API Key:</label>
+                            <input id="TMDbApiKey" name="TMDbApiKey" type="password" is="emby-input" class="emby-input" />
                             <div class="fieldDescription">Required for trailer metadata. Get your API key from <a href="https://www.themoviedb.org/settings/api" target="_blank">TMDb</a></div>
                         </div>
                         <div class="checkboxContainer checkboxContainer-withDescription">
@@ -53,14 +53,14 @@
                         </div>
                         <div class="checkboxContainer checkboxContainer-withDescription">
                             <label class="emby-checkbox-label">
-                                <input id="EnableTrailerDownloads" name="EnableTrailerDownloads" type="checkbox" is="emby-checkbox" />
+                                <input id="EnableTrailerDownload" name="EnableTrailerDownload" type="checkbox" is="emby-checkbox" />
                                 <span>Enable Trailer Downloads</span>
                             </label>
                             <div class="fieldDescription checkboxFieldDescription">Enable automatic downloading of movie trailers</div>
                         </div>
                         <div class="inputContainer">
-                            <label class="inputLabel inputLabelUnfocused" for="YtDlpPath">yt-dlp Path:</label>
-                            <input id="YtDlpPath" name="YtDlpPath" type="text" is="emby-input" class="emby-input" />
+                            <label class="inputLabel inputLabelUnfocused" for="PathToYtDlp">yt-dlp Path:</label>
+                            <input id="PathToYtDlp" name="PathToYtDlp" type="text" is="emby-input" class="emby-input" />
                             <div class="fieldDescription">Path to yt-dlp executable (leave empty for system PATH)</div>
                         </div>
                         <div class="inputContainer">
@@ -69,8 +69,8 @@
                             <div class="fieldDescription">Directory to store downloaded trailers (leave empty for plugin data directory)</div>
                         </div>
                         <div class="selectContainer">
-                            <label class="selectLabel" for="VideoQuality">Video Quality:</label>
-                            <select id="VideoQuality" name="VideoQuality" is="emby-select" class="emby-select-withcolor emby-select">
+                            <label class="selectLabel" for="TrailerQuality">Video Quality:</label>
+                            <select id="TrailerQuality" name="TrailerQuality" is="emby-select" class="emby-select-withcolor emby-select">
                                 <option value="best">Best Available</option>
                                 <option value="worst">Worst Available</option>
                                 <option value="720p">720p</option>
@@ -95,9 +95,16 @@
                         <div class="sectionTitleContainer flex align-items-center">
                             <h3 class="sectionTitle">Scanning Settings</h3>
                         </div>
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="EnableAutoDownload" name="EnableAutoDownload" type="checkbox" is="emby-checkbox" />
+                                <span>Enable Automatic Downloads</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">Automatically download trailers for new movies during scanning</div>
+                        </div>
                         <div class="inputContainer">
-                            <label class="inputLabel inputLabelUnfocused" for="ScanIntervalHours">Scan Interval (hours):</label>
-                            <input id="ScanIntervalHours" name="ScanIntervalHours" type="number" min="1" max="168" is="emby-input" class="emby-input" />
+                            <label class="inputLabel inputLabelUnfocused" for="IntervalHours">Scan Interval (hours):</label>
+                            <input id="IntervalHours" name="IntervalHours" type="number" min="1" max="168" is="emby-input" class="emby-input" />
                             <div class="fieldDescription">How often to scan for new trailers (1-168 hours)</div>
                         </div>
                     </div>
@@ -108,8 +115,15 @@
                         </div>
                         <div class="checkboxContainer checkboxContainer-withDescription">
                             <label class="emby-checkbox-label">
-                                <input id="EnableClientScriptInjection" name="EnableClientScriptInjection" type="checkbox" is="emby-checkbox" />
-                                <span>Enable Hover Previews</span>
+                                <input id="EnableHoverPreview" name="EnableHoverPreview" type="checkbox" is="emby-checkbox" />
+                                <span>Enable Hover Preview Feature</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">Enable hover preview functionality for movie cards</div>
+                        </div>
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="InjectClientScript" name="InjectClientScript" type="checkbox" is="emby-checkbox" />
+                                <span>Inject Client Script</span>
                             </label>
                             <div class="fieldDescription checkboxFieldDescription">Inject client-side script for hover preview functionality</div>
                         </div>
@@ -117,6 +131,19 @@
                             <label class="inputLabel inputLabelUnfocused" for="HoverDelayMs">Hover Delay (ms):</label>
                             <input id="HoverDelayMs" name="HoverDelayMs" type="number" min="100" max="3000" is="emby-input" class="emby-input" />
                             <div class="fieldDescription">Delay before showing hover preview (100-3000 milliseconds)</div>
+                        </div>
+                    </div>
+
+                    <div class="verticalSection">
+                        <div class="sectionTitleContainer flex align-items-center">
+                            <h3 class="sectionTitle">Debug Settings</h3>
+                        </div>
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="EnableDebugLogging" name="EnableDebugLogging" type="checkbox" is="emby-checkbox" />
+                                <span>Enable Debug Logging</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">Enable detailed logging for troubleshooting purposes</div>
                         </div>
                     </div>
 
@@ -136,18 +163,21 @@
             function loadConfiguration() {
                 Dashboard.showLoadingMsg();
                 ApiClient.getPluginConfiguration(HoverTrailerConfig.pluginUniqueId).then(function (config) {
-                    document.querySelector('#TmdbApiKey').value = config.TmdbApiKey || '';
-                    document.querySelector('#YtDlpPath').value = config.YtDlpPath || '';
-                    document.querySelector('#EnableTrailerDownloads').checked = config.EnableTrailerDownloads || false;
-                    document.querySelector('#MaxTrailerDurationSeconds').value = config.MaxTrailerDurationSeconds || 180;
-                    document.querySelector('#VideoQuality').value = config.VideoQuality || 'best';
-                    document.querySelector('#OutputPath').value = config.OutputPath || '';
-                    document.querySelector('#ScanIntervalHours').value = config.ScanIntervalHours || 24;
-                    document.querySelector('#MaxConcurrentDownloads').value = config.MaxConcurrentDownloads || 2;
+                    document.querySelector('#TMDbApiKey').value = config.TMDbApiKey || '';
                     document.querySelector('#IncludeAdultContent').checked = config.IncludeAdultContent || false;
                     document.querySelector('#PreferredLanguage').value = config.PreferredLanguage || 'en';
-                    document.querySelector('#EnableClientScriptInjection').checked = config.EnableClientScriptInjection !== false;
+                    document.querySelector('#EnableTrailerDownload').checked = config.EnableTrailerDownload || false;
+                    document.querySelector('#PathToYtDlp').value = config.PathToYtDlp || '';
+                    document.querySelector('#OutputPath').value = config.OutputPath || '';
+                    document.querySelector('#TrailerQuality').value = config.TrailerQuality || 'best';
+                    document.querySelector('#MaxTrailerDurationSeconds').value = config.MaxTrailerDurationSeconds || 180;
+                    document.querySelector('#MaxConcurrentDownloads').value = config.MaxConcurrentDownloads || 2;
+                    document.querySelector('#EnableAutoDownload').checked = config.EnableAutoDownload !== false;
+                    document.querySelector('#IntervalHours').value = config.IntervalHours || 24;
+                    document.querySelector('#EnableHoverPreview').checked = config.EnableHoverPreview !== false;
+                    document.querySelector('#InjectClientScript').checked = config.InjectClientScript !== false;
                     document.querySelector('#HoverDelayMs').value = config.HoverDelayMs || 1000;
+                    document.querySelector('#EnableDebugLogging').checked = config.EnableDebugLogging || false;
                     Dashboard.hideLoadingMsg();
                 }).catch(function (error) {
                     console.error('Error loading configuration:', error);
@@ -158,18 +188,21 @@
             function saveConfiguration() {
                 Dashboard.showLoadingMsg();
                 ApiClient.getPluginConfiguration(HoverTrailerConfig.pluginUniqueId).then(function (config) {
-                    config.TmdbApiKey = document.querySelector('#TmdbApiKey').value;
-                    config.YtDlpPath = document.querySelector('#YtDlpPath').value;
-                    config.EnableTrailerDownloads = document.querySelector('#EnableTrailerDownloads').checked;
-                    config.MaxTrailerDurationSeconds = parseInt(document.querySelector('#MaxTrailerDurationSeconds').value) || 180;
-                    config.VideoQuality = document.querySelector('#VideoQuality').value;
-                    config.OutputPath = document.querySelector('#OutputPath').value;
-                    config.ScanIntervalHours = parseInt(document.querySelector('#ScanIntervalHours').value) || 24;
-                    config.MaxConcurrentDownloads = parseInt(document.querySelector('#MaxConcurrentDownloads').value) || 2;
+                    config.TMDbApiKey = document.querySelector('#TMDbApiKey').value;
                     config.IncludeAdultContent = document.querySelector('#IncludeAdultContent').checked;
                     config.PreferredLanguage = document.querySelector('#PreferredLanguage').value;
-                    config.EnableClientScriptInjection = document.querySelector('#EnableClientScriptInjection').checked;
+                    config.EnableTrailerDownload = document.querySelector('#EnableTrailerDownload').checked;
+                    config.PathToYtDlp = document.querySelector('#PathToYtDlp').value;
+                    config.OutputPath = document.querySelector('#OutputPath').value;
+                    config.TrailerQuality = document.querySelector('#TrailerQuality').value;
+                    config.MaxTrailerDurationSeconds = parseInt(document.querySelector('#MaxTrailerDurationSeconds').value) || 180;
+                    config.MaxConcurrentDownloads = parseInt(document.querySelector('#MaxConcurrentDownloads').value) || 2;
+                    config.EnableAutoDownload = document.querySelector('#EnableAutoDownload').checked;
+                    config.IntervalHours = parseInt(document.querySelector('#IntervalHours').value) || 24;
+                    config.EnableHoverPreview = document.querySelector('#EnableHoverPreview').checked;
+                    config.InjectClientScript = document.querySelector('#InjectClientScript').checked;
                     config.HoverDelayMs = parseInt(document.querySelector('#HoverDelayMs').value) || 1000;
+                    config.EnableDebugLogging = document.querySelector('#EnableDebugLogging').checked;
 
                     ApiClient.updatePluginConfiguration(HoverTrailerConfig.pluginUniqueId, config).then(function (result) {
                         Dashboard.processPluginConfigurationUpdateResult(result);
