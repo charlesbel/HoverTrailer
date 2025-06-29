@@ -14,6 +14,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Fovty.Plugin.HoverTrailer.Exceptions;
+using Fovty.Plugin.HoverTrailer.Helpers;
+using Fovty.Plugin.HoverTrailer.Models;
 
 namespace Fovty.Plugin.HoverTrailer.Api;
 
@@ -47,24 +50,59 @@ public class HoverTrailerController : ControllerBase
     [HttpGet("ClientScript")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     [Produces("application/javascript")]
     public ActionResult GetClientScript()
     {
+        var requestId = GenerateRequestId();
+
         try
         {
             var config = Plugin.Instance?.Configuration;
-            if (config == null || !config.EnableHoverPreview)
+            if (config == null)
             {
-                return NotFound("Hover preview is disabled");
+                LoggingHelper.LogError(_logger, "Plugin configuration is null");
+                var error = new ErrorResponse("CONFIG_ERROR", "Plugin configuration not available")
+                {
+                    RequestId = requestId
+                };
+                return StatusCode(500, error);
+            }
+
+            if (!config.EnableHoverPreview)
+            {
+                LoggingHelper.LogDebug(_logger, "Hover preview is disabled in configuration");
+                var error = new ErrorResponse("FEATURE_DISABLED", "Hover preview is disabled")
+                {
+                    RequestId = requestId
+                };
+                return NotFound(error);
+            }
+
+            // Validate configuration before serving script
+            var validationErrors = config.GetValidationErrors().ToList();
+            if (validationErrors.Any())
+            {
+                LoggingHelper.LogWarning(_logger, "Configuration validation failed: {Errors}", string.Join("; ", validationErrors));
+                var error = ErrorResponse.FromConfigurationErrors(validationErrors, requestId);
+                return BadRequest(error);
             }
 
             var script = GetHoverTrailerScript(config.HoverDelayMs, config.EnableDebugLogging);
+            LoggingHelper.LogDebug(_logger, "Successfully served client script");
             return Content(script, "application/javascript");
+        }
+        catch (ConfigurationException ex)
+        {
+            LoggingHelper.LogError(_logger, ex, "Configuration error serving client script");
+            var error = ErrorResponse.FromException(ex, requestId);
+            return BadRequest(error);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error serving client script");
-            return StatusCode(500, "Internal server error");
+            LoggingHelper.LogError(_logger, ex, "Unexpected error serving client script");
+            var error = ErrorResponse.FromException(ex, requestId);
+            return StatusCode(500, error);
         }
     }
 
@@ -76,14 +114,32 @@ public class HoverTrailerController : ControllerBase
     [HttpGet("TrailerInfo/{movieId}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public ActionResult<TrailerInfo> GetTrailerInfo([FromRoute] Guid movieId)
     {
+        var requestId = GenerateRequestId();
+
         try
         {
+            if (movieId == Guid.Empty)
+            {
+                LoggingHelper.LogWarning(_logger, "Invalid movie ID provided: {MovieId}", movieId);
+                var error = new ErrorResponse("INVALID_ARGUMENT", "Movie ID cannot be empty")
+                {
+                    RequestId = requestId
+                };
+                return BadRequest(error);
+            }
+
             var movie = _libraryManager.GetItemById(movieId) as Movie;
             if (movie == null)
             {
-                return NotFound("Movie not found");
+                LoggingHelper.LogDebug(_logger, "Movie not found with ID: {MovieId}", movieId);
+                var error = new ErrorResponse("MOVIE_NOT_FOUND", "Movie not found", $"No movie found with ID: {movieId}")
+                {
+                    RequestId = requestId
+                };
+                return NotFound(error);
             }
 
             // Get trailers using extras like AutoTrailer
@@ -92,7 +148,12 @@ public class HoverTrailerController : ControllerBase
 
             if (trailer == null)
             {
-                return NotFound("No trailer found for this movie");
+                LoggingHelper.LogDebug(_logger, "No trailer found for movie: {MovieName} (ID: {MovieId})", movie.Name, movieId);
+                var error = new ErrorResponse("TRAILER_NOT_FOUND", "No trailer found for this movie", $"Movie '{movie.Name}' does not have any trailers")
+                {
+                    RequestId = requestId
+                };
+                return NotFound(error);
             }
 
             var trailerInfo = new TrailerInfo
@@ -104,12 +165,20 @@ public class HoverTrailerController : ControllerBase
                 HasSubtitles = trailer.GetMediaSources(false).Any(s => s.MediaStreams.Any(ms => ms.Type == MediaBrowser.Model.Entities.MediaStreamType.Subtitle))
             };
 
+            LoggingHelper.LogDebug(_logger, "Successfully retrieved trailer info for movie: {MovieName} (ID: {MovieId})", movie.Name, movieId);
             return Ok(trailerInfo);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            LoggingHelper.LogError(_logger, ex, "Unauthorized access getting trailer info for movie {MovieId}", movieId);
+            var error = ErrorResponse.FromException(ex, requestId);
+            return StatusCode(403, error);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting trailer info for movie {MovieId}", movieId);
-            return StatusCode(500, "Internal server error");
+            LoggingHelper.LogError(_logger, ex, "Unexpected error getting trailer info for movie {MovieId}", movieId);
+            var error = ErrorResponse.FromException(ex, requestId);
+            return StatusCode(500, error);
         }
     }
 
@@ -119,10 +188,15 @@ public class HoverTrailerController : ControllerBase
     /// <returns>List of movies with trailers.</returns>
     [HttpGet("MoviesWithTrailers")]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public ActionResult<IEnumerable<MovieTrailerInfo>> GetMoviesWithTrailers()
     {
+        var requestId = GenerateRequestId();
+
         try
         {
+            LoggingHelper.LogDebug(_logger, "Retrieving all movies with trailers");
+
             var movies = _libraryManager.GetItemList(new InternalItemsQuery
             {
                 IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.Movie },
@@ -146,12 +220,20 @@ public class HoverTrailerController : ControllerBase
                 })
                 .ToList();
 
+            LoggingHelper.LogDebug(_logger, "Successfully retrieved {Count} movies with trailers", moviesWithTrailers.Count);
             return Ok(moviesWithTrailers);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            LoggingHelper.LogError(_logger, ex, "Unauthorized access getting movies with trailers");
+            var error = ErrorResponse.FromException(ex, requestId);
+            return StatusCode(403, error);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting movies with trailers");
-            return StatusCode(500, "Internal server error");
+            LoggingHelper.LogError(_logger, ex, "Unexpected error getting movies with trailers");
+            var error = ErrorResponse.FromException(ex, requestId);
+            return StatusCode(500, error);
         }
     }
 
@@ -161,10 +243,15 @@ public class HoverTrailerController : ControllerBase
     /// <returns>The configuration status.</returns>
     [HttpGet("Status")]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public ActionResult<HoverTrailerStatus> GetStatus()
     {
+        var requestId = GenerateRequestId();
+
         try
         {
+            LoggingHelper.LogDebug(_logger, "Retrieving plugin status");
+
             var config = Plugin.Instance?.Configuration;
             var status = new HoverTrailerStatus
             {
@@ -176,12 +263,14 @@ public class HoverTrailerController : ControllerBase
                 TrailerQuality = config?.TrailerQuality ?? "720p"
             };
 
+            LoggingHelper.LogDebug(_logger, "Successfully retrieved plugin status");
             return Ok(status);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting status");
-            return StatusCode(500, "Internal server error");
+            LoggingHelper.LogError(_logger, ex, "Unexpected error getting plugin status");
+            var error = ErrorResponse.FromException(ex, requestId);
+            return StatusCode(500, error);
         }
     }
 
@@ -327,6 +416,15 @@ public class HoverTrailerController : ControllerBase
     log('HoverTrailer script initialized');
 }})();
 ";
+    }
+
+    /// <summary>
+    /// Generates a unique request ID for tracking purposes.
+    /// </summary>
+    /// <returns>A unique request identifier.</returns>
+    private static string GenerateRequestId()
+    {
+        return $"REQ_{DateTime.UtcNow:yyyyMMddHHmmss}_{Guid.NewGuid():N}";
     }
 }
 
