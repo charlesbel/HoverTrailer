@@ -126,22 +126,22 @@ public class HoverTrailerController : ControllerBase
             if (movieId == Guid.Empty)
             {
                 LoggingHelper.LogWarning(_logger, "Invalid movie ID provided: {MovieId}", movieId);
-                var error = new ErrorResponse("INVALID_ARGUMENT", "Movie ID cannot be empty")
+                var invalidError = new ErrorResponse("INVALID_ARGUMENT", "Movie ID cannot be empty")
                 {
                     RequestId = requestId
                 };
-                return BadRequest(error);
+                return BadRequest(invalidError);
             }
 
             var movie = _libraryManager.GetItemById(movieId) as Movie;
             if (movie == null)
             {
                 LoggingHelper.LogDebug(_logger, "Movie not found with ID: {MovieId}", movieId);
-                var error = new ErrorResponse("MOVIE_NOT_FOUND", "Movie not found", $"No movie found with ID: {movieId}")
+                var notFoundError = new ErrorResponse("MOVIE_NOT_FOUND", "Movie not found", $"No movie found with ID: {movieId}")
                 {
                     RequestId = requestId
                 };
-                return NotFound(error);
+                return NotFound(notFoundError);
             }
 
             // Multi-source trailer detection with priority: Local → Remote → Downloaded
@@ -169,45 +169,89 @@ public class HoverTrailerController : ControllerBase
 
             if (localTrailer != null)
             {
-                LoggingHelper.LogDebug(_logger, "No trailer found for movie: {MovieName} (ID: {MovieId})", movie.Name, movieId);
+                LoggingHelper.LogDebug(_logger, "Found local trailer for movie: {MovieName} (ID: {MovieId})", movie.Name, movieId);
+                LoggingHelper.LogDebug(_logger, "Local trailer details - ID: {TrailerId}, Name: {TrailerName}, Path: {TrailerPath}",
+                    localTrailer.Id, localTrailer.Name, localTrailer.Path);
 
-                // Also check if there are any files in the movie directory that might be trailers
-                var movieDir = System.IO.Path.GetDirectoryName(movie.Path);
-                if (!string.IsNullOrEmpty(movieDir) && System.IO.Directory.Exists(movieDir))
+                trailerInfo = new TrailerInfo
                 {
-                    var files = System.IO.Directory.GetFiles(movieDir, "*", System.IO.SearchOption.TopDirectoryOnly);
-                    LoggingHelper.LogDebug(_logger, "Files in movie directory {MovieDir}: {Files}",
-                        movieDir, string.Join(", ", files.Select(System.IO.Path.GetFileName)));
-
-                    // Look for potential trailer files
-                    var potentialTrailers = files.Where(f =>
-                        f.Contains("trailer", StringComparison.OrdinalIgnoreCase) ||
-                        f.Contains("-trailer", StringComparison.OrdinalIgnoreCase) ||
-                        f.Contains(".trailer.", StringComparison.OrdinalIgnoreCase))
-                        .ToList();
-
-                    if (potentialTrailers.Any())
-                    {
-                        LoggingHelper.LogDebug(_logger, "Potential trailer files found but not detected by Jellyfin: {PotentialTrailers}",
-                            string.Join(", ", potentialTrailers.Select(System.IO.Path.GetFileName)));
-                    }
-                    else
-                    {
-                        LoggingHelper.LogDebug(_logger, "No potential trailer files found in directory");
-                    }
-                }
-
-                var error = new ErrorResponse("TRAILER_NOT_FOUND", "No trailer found for this movie",
-                    $"Movie '{movie.Name}' does not have any local or remote trailers available")
-                {
-                    RequestId = requestId
+                    Id = localTrailer.Id,
+                    Name = localTrailer.Name,
+                    Path = localTrailer.Path,
+                    RunTimeTicks = localTrailer.RunTimeTicks,
+                    HasSubtitles = false, // Default value since BaseItem doesn't have HasSubtitles
+                    TrailerType = TrailerType.Local,
+                    IsRemote = false,
+                    Source = "Local File"
                 };
-                return NotFound(error);
+
+                LoggingHelper.LogDebug(_logger, "Successfully created local trailer info for movie: {MovieName} (ID: {MovieId})",
+                    movie.Name, movieId);
+                return Ok(trailerInfo);
             }
 
-            LoggingHelper.LogDebug(_logger, "Successfully retrieved {TrailerType} trailer info for movie: {MovieName} (ID: {MovieId})",
-                trailerInfo.TrailerType, movie.Name, movieId);
-            return Ok(trailerInfo);
+            // Step 2: Check for remote trailers if no local trailer found
+            LoggingHelper.LogDebug(_logger, "Step 2: No local trailer found, checking for remote trailers...");
+
+            if (movie.RemoteTrailers?.Any() == true)
+            {
+                var remoteTrailer = movie.RemoteTrailers.First();
+                LoggingHelper.LogDebug(_logger, "Found remote trailer for movie: {MovieName} (ID: {MovieId})", movie.Name, movieId);
+                LoggingHelper.LogDebug(_logger, "Remote trailer details - URL: {TrailerUrl}, Name: {TrailerName}",
+                    remoteTrailer.Url, remoteTrailer.Name);
+
+                trailerInfo = new TrailerInfo
+                {
+                    Id = movieId, // Use movie ID since remote trailers don't have their own ID
+                    Name = remoteTrailer.Name ?? $"{movie.Name} - Trailer",
+                    Path = remoteTrailer.Url,
+                    RunTimeTicks = null, // Remote trailers typically don't have runtime info
+                    HasSubtitles = false, // Remote trailers typically don't have subtitle info
+                    TrailerType = TrailerType.Remote,
+                    IsRemote = true,
+                    Source = GetTrailerSource(remoteTrailer.Url)
+                };
+
+                LoggingHelper.LogDebug(_logger, "Successfully created remote trailer info for movie: {MovieName} (ID: {MovieId}), Source: {Source}",
+                    movie.Name, movieId, trailerInfo.Source);
+                return Ok(trailerInfo);
+            }
+
+            // Step 3: No trailers found (local or remote)
+            LoggingHelper.LogDebug(_logger, "No local or remote trailers found for movie: {MovieName} (ID: {MovieId})", movie.Name, movieId);
+
+            // Also check if there are any files in the movie directory that might be trailers (for debugging)
+            var movieDir = System.IO.Path.GetDirectoryName(movie.Path);
+            if (!string.IsNullOrEmpty(movieDir) && System.IO.Directory.Exists(movieDir))
+            {
+                var files = System.IO.Directory.GetFiles(movieDir, "*", System.IO.SearchOption.TopDirectoryOnly);
+                LoggingHelper.LogDebug(_logger, "Files in movie directory {MovieDir}: {Files}",
+                    movieDir, string.Join(", ", files.Select(System.IO.Path.GetFileName)));
+
+                // Look for potential trailer files
+                var potentialTrailers = files.Where(f =>
+                    f.Contains("trailer", StringComparison.OrdinalIgnoreCase) ||
+                    f.Contains("-trailer", StringComparison.OrdinalIgnoreCase) ||
+                    f.Contains(".trailer.", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
+                if (potentialTrailers.Any())
+                {
+                    LoggingHelper.LogDebug(_logger, "Potential trailer files found but not detected by Jellyfin: {PotentialTrailers}",
+                        string.Join(", ", potentialTrailers.Select(System.IO.Path.GetFileName)));
+                }
+                else
+                {
+                    LoggingHelper.LogDebug(_logger, "No potential trailer files found in directory");
+                }
+            }
+
+            var error = new ErrorResponse("TRAILER_NOT_FOUND", "No trailer found for this movie",
+                $"Movie '{movie.Name}' does not have any local or remote trailers available")
+            {
+                RequestId = requestId
+            };
+            return NotFound(error);
         }
         catch (UnauthorizedAccessException ex)
         {
