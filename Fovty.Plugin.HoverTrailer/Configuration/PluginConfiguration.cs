@@ -13,21 +13,6 @@ namespace Fovty.Plugin.HoverTrailer.Configuration;
 public class PluginConfiguration : BasePluginConfiguration
 {
     /// <summary>
-    /// Gets or sets the TMDb API key.
-    /// </summary>
-    public string? TMDbApiKey { get; set; }
-
-    /// <summary>
-    /// Gets or sets a value indicating whether to include adult content in searches.
-    /// </summary>
-    public bool IncludeAdultContent { get; set; } = false;
-
-    /// <summary>
-    /// Gets or sets the preferred language for trailer metadata.
-    /// </summary>
-    public string PreferredLanguage { get; set; } = "en";
-
-    /// <summary>
     /// Gets or sets a value indicating whether trailer downloading is enabled.
     /// </summary>
     public bool EnableTrailerDownload { get; set; } = true;
@@ -36,11 +21,6 @@ public class PluginConfiguration : BasePluginConfiguration
     /// Gets or sets the path to the yt-dlp executable.
     /// </summary>
     public string PathToYtDlp { get; set; } = "yt-dlp";
-
-    /// <summary>
-    /// Gets or sets the output directory for downloaded trailers.
-    /// </summary>
-    public string OutputPath { get; set; } = "";
 
     /// <summary>
     /// Gets or sets the trailer quality preference.
@@ -65,7 +45,7 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <summary>
     /// Gets or sets a value indicating whether automatic trailer downloading is enabled.
     /// </summary>
-    public bool EnableAutoDownload { get; set; } = true;
+    public bool EnableAutoDownload { get; set; } = false;
 
     /// <summary>
     /// Gets or sets a value indicating whether hover preview is enabled.
@@ -88,6 +68,13 @@ public class PluginConfiguration : BasePluginConfiguration
     public bool EnableDebugLogging { get; set; } = false;
 
     /// <summary>
+    /// Gets or sets the trailer source URL pattern for manual trailer downloads.
+    /// Use {movie_name} placeholder for the movie name.
+    /// Example: "https://www.youtube.com/results?search_query={movie_name}+trailer"
+    /// </summary>
+    public string TrailerSourcePattern { get; set; } = "";
+
+    /// <summary>
     /// Validates the current configuration and throws ConfigurationException if invalid.
     /// </summary>
     /// <exception cref="ConfigurationException">Thrown when configuration is invalid.</exception>
@@ -106,47 +93,10 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <returns>An enumerable of validation error messages.</returns>
     public IEnumerable<string> GetValidationErrors()
     {
-        // TMDb API Key validation
-        if (string.IsNullOrWhiteSpace(TMDbApiKey))
+        // yt-dlp path validation (only if trailer download is enabled)
+        if (EnableTrailerDownload && string.IsNullOrWhiteSpace(PathToYtDlp))
         {
-            yield return "TMDb API Key is required";
-        }
-        else if (TMDbApiKey.Length < 32)
-        {
-            yield return "TMDb API Key appears to be invalid (too short)";
-        }
-
-        // Preferred Language validation
-        if (string.IsNullOrWhiteSpace(PreferredLanguage))
-        {
-            yield return "Preferred Language cannot be empty";
-        }
-        else if (!IsValidLanguageCode(PreferredLanguage))
-        {
-            yield return $"Preferred Language '{PreferredLanguage}' is not a valid language code";
-        }
-
-        // yt-dlp path validation
-        if (string.IsNullOrWhiteSpace(PathToYtDlp))
-        {
-            yield return "Path to yt-dlp cannot be empty";
-        }
-
-        // Output path validation
-        if (!string.IsNullOrWhiteSpace(OutputPath))
-        {
-            if (OutputPath.IndexOfAny(Path.GetInvalidPathChars()) >= 0)
-            {
-                yield return $"Output Path '{OutputPath}' contains invalid characters";
-            }
-            else if (!Path.IsPathRooted(OutputPath))
-            {
-                // Allow relative paths but validate they don't contain invalid sequences
-                if (OutputPath.Contains("..") || OutputPath.StartsWith("/") || OutputPath.StartsWith("\\"))
-                {
-                    yield return $"Output Path '{OutputPath}' contains invalid path sequences";
-                }
-            }
+            yield return "Path to yt-dlp cannot be empty when trailer download is enabled";
         }
 
         // Trailer quality validation
@@ -215,10 +165,9 @@ public class PluginConfiguration : BasePluginConfiguration
     {
         return propertyName switch
         {
-            nameof(TMDbApiKey) => ValidateTMDbApiKey(),
-            nameof(PreferredLanguage) => ValidatePreferredLanguage(),
+
             nameof(PathToYtDlp) => ValidatePathToYtDlp(),
-            nameof(OutputPath) => ValidateOutputPath(),
+
             nameof(TrailerQuality) => ValidateTrailerQuality(),
             nameof(MaxTrailerDurationSeconds) => ValidateMaxTrailerDurationSeconds(),
             nameof(MaxConcurrentDownloads) => ValidateMaxConcurrentDownloads(),
@@ -228,47 +177,10 @@ public class PluginConfiguration : BasePluginConfiguration
         };
     }
 
-    private string? ValidateTMDbApiKey()
-    {
-        if (string.IsNullOrWhiteSpace(TMDbApiKey))
-            return "TMDb API Key is required";
-        if (TMDbApiKey.Length < 32)
-            return "TMDb API Key appears to be invalid (too short)";
-        return null;
-    }
-
-    private string? ValidatePreferredLanguage()
-    {
-        if (string.IsNullOrWhiteSpace(PreferredLanguage))
-            return "Preferred Language cannot be empty";
-        if (!IsValidLanguageCode(PreferredLanguage))
-            return $"Preferred Language '{PreferredLanguage}' is not a valid language code";
-        return null;
-    }
-
     private string? ValidatePathToYtDlp()
     {
-        if (string.IsNullOrWhiteSpace(PathToYtDlp))
-            return "Path to yt-dlp cannot be empty";
-        return null;
-    }
-
-    private string? ValidateOutputPath()
-    {
-        if (!string.IsNullOrWhiteSpace(OutputPath))
-        {
-            try
-            {
-                if (!Path.IsPathRooted(OutputPath) && !Path.GetInvalidPathChars().All(c => !OutputPath.Contains(c)))
-                {
-                    return $"Output Path '{OutputPath}' contains invalid characters";
-                }
-            }
-            catch (Exception)
-            {
-                return $"Output Path '{OutputPath}' is not a valid path";
-            }
-        }
+        if (EnableTrailerDownload && string.IsNullOrWhiteSpace(PathToYtDlp))
+            return "Path to yt-dlp cannot be empty when trailer download is enabled";
         return null;
     }
 

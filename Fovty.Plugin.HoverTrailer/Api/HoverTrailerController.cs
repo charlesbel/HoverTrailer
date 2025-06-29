@@ -145,12 +145,54 @@ public class HoverTrailerController : ControllerBase
             }
 
             // Get trailers using extras like AutoTrailer
+            LoggingHelper.LogDebug(_logger, "Searching for trailers for movie: {MovieName} (ID: {MovieId})", movie.Name, movieId);
+            LoggingHelper.LogDebug(_logger, "Movie path: {MoviePath}", movie.Path ?? "null");
+            LoggingHelper.LogDebug(_logger, "Movie directory: {MovieDirectory}", movie.Path != null ? System.IO.Path.GetDirectoryName(movie.Path) ?? "null" : "null");
+
             var trailers = movie.GetExtras(new[] { ExtraType.Trailer });
+            LoggingHelper.LogDebug(_logger, "Found {TrailerCount} trailers for movie: {MovieName}", trailers.Count(), movie.Name);
+
+            // Log detailed information about each trailer found
+            var trailerList = trailers.ToList();
+            for (int i = 0; i < trailerList.Count; i++)
+            {
+                var t = trailerList[i];
+                LoggingHelper.LogDebug(_logger, "Trailer {Index}: ID={TrailerId}, Name={TrailerName}, Path={TrailerPath}",
+                    i + 1, t.Id, t.Name, t.Path);
+            }
+
             var trailer = trailers.FirstOrDefault();
 
             if (trailer == null)
             {
                 LoggingHelper.LogDebug(_logger, "No trailer found for movie: {MovieName} (ID: {MovieId})", movie.Name, movieId);
+
+                // Also check if there are any files in the movie directory that might be trailers
+                var movieDir = System.IO.Path.GetDirectoryName(movie.Path);
+                if (!string.IsNullOrEmpty(movieDir) && System.IO.Directory.Exists(movieDir))
+                {
+                    var files = System.IO.Directory.GetFiles(movieDir, "*", System.IO.SearchOption.TopDirectoryOnly);
+                    LoggingHelper.LogDebug(_logger, "Files in movie directory {MovieDir}: {Files}",
+                        movieDir, string.Join(", ", files.Select(System.IO.Path.GetFileName)));
+
+                    // Look for potential trailer files
+                    var potentialTrailers = files.Where(f =>
+                        f.Contains("trailer", StringComparison.OrdinalIgnoreCase) ||
+                        f.Contains("-trailer", StringComparison.OrdinalIgnoreCase) ||
+                        f.Contains(".trailer.", StringComparison.OrdinalIgnoreCase))
+                        .ToList();
+
+                    if (potentialTrailers.Any())
+                    {
+                        LoggingHelper.LogDebug(_logger, "Potential trailer files found but not detected by Jellyfin: {PotentialTrailers}",
+                            string.Join(", ", potentialTrailers.Select(System.IO.Path.GetFileName)));
+                    }
+                    else
+                    {
+                        LoggingHelper.LogDebug(_logger, "No potential trailer files found in directory");
+                    }
+                }
+
                 var error = new ErrorResponse("TRAILER_NOT_FOUND", "No trailer found for this movie", $"Movie '{movie.Name}' does not have any trailers")
                 {
                     RequestId = requestId
@@ -258,7 +300,6 @@ public class HoverTrailerController : ControllerBase
             var status = new HoverTrailerStatus
             {
                 IsEnabled = config?.EnableHoverPreview ?? false,
-                HasTmdbApiKey = !string.IsNullOrEmpty(config?.TMDbApiKey),
                 HasYtDlpPath = !string.IsNullOrEmpty(config?.PathToYtDlp),
                 AutoDownloadEnabled = config?.EnableAutoDownload ?? false,
                 HoverDelayMs = config?.HoverDelayMs ?? 1000,

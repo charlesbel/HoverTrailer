@@ -67,12 +67,10 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
 
         // Log final configuration state after initialization
         LoggingHelper.LogInformation(logger, "Plugin initialization completed. Configuration state:");
-        LoggingHelper.LogInformation(logger, "  TMDbApiKey: {HasKey}", !string.IsNullOrEmpty(Configuration.TMDbApiKey));
-        LoggingHelper.LogInformation(logger, "  IncludeAdultContent: {Value}", Configuration.IncludeAdultContent);
-        LoggingHelper.LogInformation(logger, "  PreferredLanguage: {Value}", Configuration.PreferredLanguage);
+
         LoggingHelper.LogInformation(logger, "  EnableTrailerDownload: {Value}", Configuration.EnableTrailerDownload);
         LoggingHelper.LogInformation(logger, "  PathToYtDlp: {Value}", Configuration.PathToYtDlp);
-        LoggingHelper.LogInformation(logger, "  OutputPath: {Value}", Configuration.OutputPath);
+
         LoggingHelper.LogInformation(logger, "  TrailerQuality: {Value}", Configuration.TrailerQuality);
         LoggingHelper.LogInformation(logger, "  MaxTrailerDurationSeconds: {Value}", Configuration.MaxTrailerDurationSeconds);
         LoggingHelper.LogInformation(logger, "  MaxConcurrentDownloads: {Value}", Configuration.MaxConcurrentDownloads);
@@ -201,7 +199,7 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
 
             string indexContents = File.ReadAllText(indexFile);
             string scriptReplace = "<script plugin=\"HoverTrailer\".*?></script>";
-            string scriptElement = string.Format("<script plugin=\"HoverTrailer\" version=\"0.0.0.1\" src=\"{0}/HoverTrailer/ClientScript\" defer></script>", basePath);
+            string scriptElement = string.Format("<script plugin=\"HoverTrailer\" version=\"0.0.0.3\" src=\"{0}/HoverTrailer/ClientScript\" defer></script>", basePath);
 
             if (indexContents.Contains(scriptElement))
             {

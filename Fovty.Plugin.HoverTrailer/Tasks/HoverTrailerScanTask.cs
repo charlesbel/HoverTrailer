@@ -16,6 +16,7 @@ using System.Diagnostics;
 using MediaBrowser.Model.Providers;
 using System.Text.Json.Serialization;
 using MediaBrowser.Model.Querying;
+using System.Text;
 using Fovty.Plugin.HoverTrailer.Helpers;
 using Fovty.Plugin.HoverTrailer.Exceptions;
 using Fovty.Plugin.HoverTrailer.Configuration;
@@ -97,12 +98,6 @@ public class HoverTrailerScanTask : IScheduledTask
                     {
                         errors.Add($"{movie.Name}: {result.Error}");
                     }
-                }
-                catch (TMDbApiException ex)
-                {
-                    var error = $"TMDb API error for {movie.Name}: {ex.Message}";
-                    errors.Add(error);
-                    LoggingHelper.LogError(_logger, ex, "TMDb API error processing movie {MovieName}", requestId, movie.Name);
                 }
                 catch (YtDlpException ex)
                 {
@@ -281,7 +276,6 @@ public class HoverTrailerScanTask : IScheduledTask
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <param name="requestId">Request ID for tracing.</param>
     /// <returns>True if the download was successful, false otherwise.</returns>
-    /// <exception cref="TMDbApiException">Thrown when TMDb API fails.</exception>
     /// <exception cref="YtDlpException">Thrown when yt-dlp fails.</exception>
     /// <exception cref="TrailerException">Thrown when trailer processing fails.</exception>
     private async Task<bool> DownloadTrailerForMovieAsync(Movie movie, CancellationToken cancellationToken, string requestId)
@@ -296,22 +290,8 @@ public class HoverTrailerScanTask : IScheduledTask
                 LoggingHelper.LogDebug(_logger, "Download attempt {Attempt}/{MaxRetries} for movie {MovieName}",
                     requestId, attempt, maxRetries, movie.Name);
 
-                // Get TMDb ID
-                var tmdbId = GetTmdbId(movie, requestId);
-                if (string.IsNullOrEmpty(tmdbId))
-                {
-                    throw new TrailerException($"Could not find TMDb ID for movie {movie.Name}");
-                }
-
-                // Get trailer URL from TMDb
-                var trailerUrl = await GetTrailerUrlFromTmdbAsync(tmdbId, cancellationToken, requestId);
-                if (string.IsNullOrEmpty(trailerUrl))
-                {
-                    throw new TrailerException($"Could not find trailer URL for movie {movie.Name}");
-                }
-
-                // Download trailer using yt-dlp
-                var success = await DownloadTrailerAsync(movie, trailerUrl, cancellationToken, requestId);
+                // Use yt-dlp to search and download trailer directly
+                var success = await DownloadTrailerDirectlyAsync(movie, cancellationToken, requestId);
                 if (success)
                 {
                     LoggingHelper.LogInformation(_logger, "Successfully downloaded trailer for {MovieName} on attempt {Attempt}",
@@ -327,11 +307,6 @@ public class HoverTrailerScanTask : IScheduledTask
                     await Task.Delay(delay, cancellationToken);
                 }
             }
-            catch (TMDbApiException)
-            {
-                if (attempt == maxRetries) throw;
-                LoggingHelper.LogWarning(_logger, "TMDb API error on attempt {Attempt} for {MovieName}", requestId, attempt, movie.Name);
-            }
             catch (YtDlpException)
             {
                 if (attempt == maxRetries) throw;
@@ -339,7 +314,7 @@ public class HoverTrailerScanTask : IScheduledTask
             }
             catch (TrailerException)
             {
-                // Don't retry for trailer-specific errors (like missing TMDb ID)
+                // Don't retry for trailer-specific errors
                 throw;
             }
             catch (Exception ex)
@@ -356,105 +331,105 @@ public class HoverTrailerScanTask : IScheduledTask
         return false;
     }
 
-    /// <summary>
-    /// Gets the TMDb ID from movie metadata.
-    /// </summary>
-    /// <param name="movie">The movie.</param>
-    /// <param name="requestId">Request ID for tracing.</param>
-    /// <returns>The TMDb ID or null if not found.</returns>
-    private string? GetTmdbId(Movie movie, string requestId)
-    {
-        try
-        {
-            if (movie.ProviderIds?.TryGetValue(MetadataProvider.Tmdb.ToString(), out var tmdbId) == true)
-            {
-                LoggingHelper.LogDebug(_logger, "Found TMDb ID {TmdbId} for movie {MovieName}", requestId, tmdbId, movie.Name);
-                return tmdbId;
-            }
 
-            LoggingHelper.LogWarning(_logger, "No TMDb ID found for movie {MovieName}", requestId, movie.Name);
-            return null;
-        }
-        catch (Exception ex)
-        {
-            LoggingHelper.LogError(_logger, ex, "Error retrieving TMDb ID for movie {MovieName}", requestId, movie.Name);
-            return null;
-        }
-    }
 
     /// <summary>
-    /// Gets trailer URL from TMDb API with enhanced error handling.
+    /// Downloads trailer directly using yt-dlp search functionality.
     /// </summary>
-    /// <param name="tmdbId">The TMDb ID.</param>
+    /// <param name="movie">The movie to download a trailer for.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <param name="requestId">Request ID for tracing.</param>
-    /// <returns>The trailer URL or null if not found.</returns>
-    /// <exception cref="TMDbApiException">Thrown when TMDb API fails.</exception>
-    private async Task<string?> GetTrailerUrlFromTmdbAsync(string tmdbId, CancellationToken cancellationToken, string requestId)
+    /// <returns>True if the download was successful, false otherwise.</returns>
+    /// <exception cref="YtDlpException">Thrown when yt-dlp fails.</exception>
+    /// <exception cref="TrailerException">Thrown when trailer processing fails.</exception>
+    private async Task<bool> DownloadTrailerDirectlyAsync(Movie movie, CancellationToken cancellationToken, string requestId)
     {
         try
         {
             var config = Plugin.Instance!.Configuration;
-            LoggingHelper.LogDebug(_logger, "Requesting trailer URL from TMDb for ID {TmdbId}", requestId, tmdbId);
+            LoggingHelper.LogDebug(_logger, "Starting direct yt-dlp search and download for {MovieName}", requestId, movie.Name);
 
-            using var httpClient = _httpClientFactory.CreateClient();
-            httpClient.Timeout = TimeSpan.FromSeconds(30); // Set reasonable timeout
-
-            var url = $"https://api.themoviedb.org/3/movie/{tmdbId}/videos?api_key={config.TMDbApiKey}";
-
-            var response = await httpClient.GetAsync(url, cancellationToken);
-            if (!response.IsSuccessStatusCode)
+            var movieDirectory = Path.GetDirectoryName(movie.Path);
+            if (string.IsNullOrEmpty(movieDirectory))
             {
-                var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
-                throw new TMDbApiException(
-                    $"TMDb API request failed with status {response.StatusCode}. Response: {errorContent}",
-                    (int)response.StatusCode);
+                throw new TrailerException($"Could not determine directory for movie {movie.Name}");
             }
 
-            var json = await response.Content.ReadAsStringAsync(cancellationToken);
-
-            TmdbVideoResponse? videoResponse;
-            try
+            // Ensure directory exists
+            if (!Directory.Exists(movieDirectory))
             {
-                videoResponse = JsonSerializer.Deserialize<TmdbVideoResponse>(json);
-            }
-            catch (JsonException ex)
-            {
-                throw new TMDbApiException("Failed to parse TMDb API response", ex);
+                throw new TrailerException($"Movie directory does not exist: {movieDirectory}");
             }
 
-            var trailer = videoResponse?.Results?
-                .Where(v => v.Type?.Equals("Trailer", StringComparison.OrdinalIgnoreCase) == true)
-                .Where(v => v.Site?.Equals("YouTube", StringComparison.OrdinalIgnoreCase) == true)
-                .FirstOrDefault();
+            var movieName = Path.GetFileNameWithoutExtension(movie.Path);
+            var outputPath = Path.Combine(movieDirectory, $"{movieName}-trailer.%(ext)s");
 
-            if (trailer?.Key != null)
+            // Create search query for the movie trailer
+            var searchQuery = $"{movie.Name} {movie.ProductionYear} trailer";
+
+            var arguments = BuildYtDlpArgumentsForSearch(config, outputPath, searchQuery);
+            LoggingHelper.LogDebug(_logger, "yt-dlp search arguments: {Arguments}", requestId, string.Join(" ", arguments));
+
+            var processInfo = new ProcessStartInfo
             {
-                var trailerUrl = $"https://www.youtube.com/watch?v={trailer.Key}";
-                LoggingHelper.LogDebug(_logger, "Found trailer URL for TMDb ID {TmdbId}: {TrailerUrl}", requestId, tmdbId, trailerUrl);
-                return trailerUrl;
-            }
+                FileName = config.PathToYtDlp,
+                Arguments = string.Join(" ", arguments),
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
+                WorkingDirectory = movieDirectory
+            };
 
-            LoggingHelper.LogWarning(_logger, "No suitable trailer found for TMDb ID {TmdbId}", requestId, tmdbId);
-            return null;
-        }
-        catch (TMDbApiException)
-        {
-            throw; // Re-throw TMDb-specific exceptions
-        }
-        catch (HttpRequestException ex)
-        {
-            throw new TMDbApiException("Network error accessing TMDb API", ex);
-        }
-        catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
-        {
-            throw new TMDbApiException("TMDb API request timed out", ex);
+            using var process = new Process { StartInfo = processInfo };
+            var output = new StringBuilder();
+            var error = new StringBuilder();
+
+            process.OutputDataReceived += (sender, e) =>
+            {
+                if (!string.IsNullOrEmpty(e.Data))
+                {
+                    output.AppendLine(e.Data);
+                    LoggingHelper.LogDebug(_logger, "yt-dlp output: {Output}", requestId, e.Data);
+                }
+            };
+
+            process.ErrorDataReceived += (sender, e) =>
+            {
+                if (!string.IsNullOrEmpty(e.Data))
+                {
+                    error.AppendLine(e.Data);
+                    LoggingHelper.LogDebug(_logger, "yt-dlp error: {Error}", requestId, e.Data);
+                }
+            };
+
+            process.Start();
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+
+            await process.WaitForExitAsync(cancellationToken);
+
+            if (process.ExitCode == 0)
+            {
+                LoggingHelper.LogInformation(_logger, "Successfully downloaded trailer for {MovieName}", requestId, movie.Name);
+                return true;
+            }
+            else
+            {
+                var errorOutput = error.ToString();
+                LoggingHelper.LogWarning(_logger, "yt-dlp failed for {MovieName} with exit code {ExitCode}. Error: {Error}",
+                    requestId, movie.Name, process.ExitCode, errorOutput);
+                return false;
+            }
         }
         catch (Exception ex)
         {
-            throw new TMDbApiException($"Unexpected error getting trailer URL from TMDb for ID {tmdbId}", ex);
+            LoggingHelper.LogError(_logger, ex, "Error downloading trailer directly for movie {MovieName}", requestId, movie.Name);
+            return false;
         }
     }
+
+
 
     /// <summary>
     /// Downloads a trailer using yt-dlp with enhanced error handling.
@@ -572,6 +547,37 @@ public class HoverTrailerScanTask : IScheduledTask
     }
 
     /// <summary>
+    /// Builds yt-dlp command line arguments for searching and downloading a trailer.
+    /// </summary>
+    /// <param name="config">Plugin configuration.</param>
+    /// <param name="outputPath">Output file path.</param>
+    /// <param name="searchQuery">Search query for trailer.</param>
+    /// <returns>List of command line arguments.</returns>
+    private static List<string> BuildYtDlpArgumentsForSearch(PluginConfiguration config, string outputPath, string searchQuery)
+    {
+        var arguments = new List<string>
+        {
+            "--format", GetYtDlpFormat(config.TrailerQuality),
+            "--output", $"\"{outputPath}\"",
+            "--no-playlist",
+            "--extract-flat", "false",
+            "--no-check-certificate", // Help with SSL issues
+            "--socket-timeout", "30", // 30 second socket timeout
+            "--playlist-end", "1", // Only download the first result
+            "--match-filter", "duration < 600" // Limit to videos under 10 minutes
+        };
+
+        if (config.MaxTrailerDurationSeconds > 0)
+        {
+            arguments.AddRange(new[] { "--postprocessor-args", $"ffmpeg:-t {config.MaxTrailerDurationSeconds}" });
+        }
+
+        // Use ytsearch: prefix for YouTube search
+        arguments.Add($"\"ytsearch:{searchQuery}\"");
+        return arguments;
+    }
+
+    /// <summary>
     /// Builds the command line arguments for yt-dlp.
     /// </summary>
     /// <param name="config">Plugin configuration.</param>
@@ -618,32 +624,7 @@ public class HoverTrailerScanTask : IScheduledTask
     }
 }
 
-/// <summary>
-/// TMDb video response model.
-/// </summary>
-public class TmdbVideoResponse
-{
-    [JsonPropertyName("results")]
-    public TmdbVideo[]? Results { get; set; }
-}
 
-/// <summary>
-/// TMDb video model.
-/// </summary>
-public class TmdbVideo
-{
-    [JsonPropertyName("key")]
-    public string? Key { get; set; }
-
-    [JsonPropertyName("site")]
-    public string? Site { get; set; }
-
-    [JsonPropertyName("type")]
-    public string? Type { get; set; }
-
-    [JsonPropertyName("name")]
-    public string? Name { get; set; }
-}
 
 /// <summary>
 /// Result of processing a single movie for trailers.
