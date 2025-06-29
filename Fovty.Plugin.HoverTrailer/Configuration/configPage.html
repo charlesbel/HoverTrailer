@@ -22,13 +22,11 @@
                             <input id="TMDbApiKey" name="TMDbApiKey" type="password" is="emby-input" class="emby-input" />
                             <div class="fieldDescription">Required for trailer metadata. Get your API key from <a href="https://www.themoviedb.org/settings/api" target="_blank">TMDb</a></div>
                         </div>
-                        <div class="checkboxContainer checkboxContainer-withDescription">
-                            <label class="emby-checkbox-label">
-                                <input id="IncludeAdultContent" name="IncludeAdultContent" type="checkbox" is="emby-checkbox" />
-                                <span>Include Adult Content</span>
-                            </label>
-                            <div class="fieldDescription checkboxFieldDescription">Include adult content in trailer searches</div>
-                        </div>
+                        <label class="emby-checkbox-label">
+                            <input id="IncludeAdultContent" name="IncludeAdultContent" type="checkbox" is="emby-checkbox" />
+                            <span>Include Adult Content</span>
+                        </label>
+                        <div class="fieldDescription">Include adult content in trailer searches</div>
                         <div class="selectContainer">
                             <label class="selectLabel" for="PreferredLanguage">Preferred Language:</label>
                             <select id="PreferredLanguage" name="PreferredLanguage" is="emby-select" class="emby-select-withcolor emby-select">
@@ -51,13 +49,11 @@
                         <div class="sectionTitleContainer flex align-items-center">
                             <h3 class="sectionTitle">Download Settings</h3>
                         </div>
-                        <div class="checkboxContainer checkboxContainer-withDescription">
-                            <label class="emby-checkbox-label">
-                                <input id="EnableTrailerDownload" name="EnableTrailerDownload" type="checkbox" is="emby-checkbox" />
-                                <span>Enable Trailer Downloads</span>
-                            </label>
-                            <div class="fieldDescription checkboxFieldDescription">Enable automatic downloading of movie trailers</div>
-                        </div>
+                        <label class="emby-checkbox-label">
+                            <input id="EnableTrailerDownload" name="EnableTrailerDownload" type="checkbox" is="emby-checkbox" />
+                            <span>Enable Trailer Downloads</span>
+                        </label>
+                        <div class="fieldDescription">Enable automatic downloading of movie trailers</div>
                         <div class="inputContainer">
                             <label class="inputLabel inputLabelUnfocused" for="PathToYtDlp">yt-dlp Path:</label>
                             <input id="PathToYtDlp" name="PathToYtDlp" type="text" is="emby-input" class="emby-input" />
@@ -95,13 +91,11 @@
                         <div class="sectionTitleContainer flex align-items-center">
                             <h3 class="sectionTitle">Scanning Settings</h3>
                         </div>
-                        <div class="checkboxContainer checkboxContainer-withDescription">
-                            <label class="emby-checkbox-label">
-                                <input id="EnableAutoDownload" name="EnableAutoDownload" type="checkbox" is="emby-checkbox" />
-                                <span>Enable Automatic Downloads</span>
-                            </label>
-                            <div class="fieldDescription checkboxFieldDescription">Automatically download trailers for new movies during scanning</div>
-                        </div>
+                        <label class="emby-checkbox-label">
+                            <input id="EnableAutoDownload" name="EnableAutoDownload" type="checkbox" is="emby-checkbox" />
+                            <span>Enable Automatic Downloads</span>
+                        </label>
+                        <div class="fieldDescription">Automatically download trailers for new movies during scanning</div>
                         <div class="inputContainer">
                             <label class="inputLabel inputLabelUnfocused" for="IntervalHours">Scan Interval (hours):</label>
                             <input id="IntervalHours" name="IntervalHours" type="number" min="1" max="168" is="emby-input" class="emby-input" />
@@ -113,20 +107,16 @@
                         <div class="sectionTitleContainer flex align-items-center">
                             <h3 class="sectionTitle">Hover Preview Settings</h3>
                         </div>
-                        <div class="checkboxContainer checkboxContainer-withDescription">
-                            <label class="emby-checkbox-label">
-                                <input id="EnableHoverPreview" name="EnableHoverPreview" type="checkbox" is="emby-checkbox" />
-                                <span>Enable Hover Preview Feature</span>
-                            </label>
-                            <div class="fieldDescription checkboxFieldDescription">Enable hover preview functionality for movie cards</div>
-                        </div>
-                        <div class="checkboxContainer checkboxContainer-withDescription">
-                            <label class="emby-checkbox-label">
-                                <input id="InjectClientScript" name="InjectClientScript" type="checkbox" is="emby-checkbox" />
-                                <span>Inject Client Script</span>
-                            </label>
-                            <div class="fieldDescription checkboxFieldDescription">Inject client-side script for hover preview functionality</div>
-                        </div>
+                        <label class="emby-checkbox-label">
+                            <input id="EnableHoverPreview" name="EnableHoverPreview" type="checkbox" is="emby-checkbox" />
+                            <span>Enable Hover Preview Feature</span>
+                        </label>
+                        <div class="fieldDescription">Enable hover preview functionality for movie cards</div>
+                        <label class="emby-checkbox-label">
+                            <input id="InjectClientScript" name="InjectClientScript" type="checkbox" is="emby-checkbox" />
+                            <span>Inject Client Script</span>
+                        </label>
+                        <div class="fieldDescription">Inject client-side script for hover preview functionality</div>
                         <div class="inputContainer">
                             <label class="inputLabel inputLabelUnfocused" for="HoverDelayMs">Hover Delay (ms):</label>
                             <input id="HoverDelayMs" name="HoverDelayMs" type="number" min="100" max="3000" is="emby-input" class="emby-input" />
@@ -138,13 +128,11 @@
                         <div class="sectionTitleContainer flex align-items-center">
                             <h3 class="sectionTitle">Debug Settings</h3>
                         </div>
-                        <div class="checkboxContainer checkboxContainer-withDescription">
-                            <label class="emby-checkbox-label">
-                                <input id="EnableDebugLogging" name="EnableDebugLogging" type="checkbox" is="emby-checkbox" />
-                                <span>Enable Debug Logging</span>
-                            </label>
-                            <div class="fieldDescription checkboxFieldDescription">Enable detailed logging for troubleshooting purposes</div>
-                        </div>
+                        <label class="emby-checkbox-label">
+                            <input id="EnableDebugLogging" name="EnableDebugLogging" type="checkbox" is="emby-checkbox" />
+                            <span>Enable Debug Logging</span>
+                        </label>
+                        <div class="fieldDescription">Enable detailed logging for troubleshooting purposes</div>
                     </div>
 
                     <div>
@@ -218,17 +206,15 @@
                 });
             }
 
-            document.querySelector('#HoverTrailerConfigPage')
-                .addEventListener('pageshow', function() {
-                    loadConfiguration();
-                });
+            document.querySelector("#HoverTrailerConfigPage").addEventListener("pageshow", () => {
+                loadConfiguration();
+            });
 
-            document.querySelector('#HoverTrailerConfigForm')
-                .addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    saveConfiguration();
-                    return false;
-                });
+            document.querySelector("#HoverTrailerConfigForm").addEventListener("submit", (e) => {
+                e.preventDefault();
+                saveConfiguration();
+                return false;
+            });
         </script>
     </div>
 </body>

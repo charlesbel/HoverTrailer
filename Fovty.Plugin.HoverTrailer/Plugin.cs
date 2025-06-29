@@ -56,14 +56,32 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
         {
             LoggingHelper.LogError(logger, "Configuration error during plugin initialization: {Message}", ex.Message);
             LoggingHelper.LogDebug(logger, "Configuration error details: {Exception}", ex.ToString());
-            throw; // Re-throw to prevent plugin from loading with invalid config
+            // Don't re-throw, allow plugin to load so config page is accessible.
         }
         catch (Exception ex)
         {
             LoggingHelper.LogError(logger, "Unexpected error during plugin initialization: {Message}", ex.Message);
             LoggingHelper.LogDebug(logger, "Initialization error details: {Exception}", ex.ToString());
-            throw new PluginInitializationException("Failed to initialize HoverTrailer plugin", ex);
+            // Don't re-throw, allow plugin to load so config page is accessible.
         }
+
+        // Log final configuration state after initialization
+        LoggingHelper.LogInformation(logger, "Plugin initialization completed. Configuration state:");
+        LoggingHelper.LogInformation(logger, "  TMDbApiKey: {HasKey}", !string.IsNullOrEmpty(Configuration.TMDbApiKey));
+        LoggingHelper.LogInformation(logger, "  IncludeAdultContent: {Value}", Configuration.IncludeAdultContent);
+        LoggingHelper.LogInformation(logger, "  PreferredLanguage: {Value}", Configuration.PreferredLanguage);
+        LoggingHelper.LogInformation(logger, "  EnableTrailerDownload: {Value}", Configuration.EnableTrailerDownload);
+        LoggingHelper.LogInformation(logger, "  PathToYtDlp: {Value}", Configuration.PathToYtDlp);
+        LoggingHelper.LogInformation(logger, "  OutputPath: {Value}", Configuration.OutputPath);
+        LoggingHelper.LogInformation(logger, "  TrailerQuality: {Value}", Configuration.TrailerQuality);
+        LoggingHelper.LogInformation(logger, "  MaxTrailerDurationSeconds: {Value}", Configuration.MaxTrailerDurationSeconds);
+        LoggingHelper.LogInformation(logger, "  MaxConcurrentDownloads: {Value}", Configuration.MaxConcurrentDownloads);
+        LoggingHelper.LogInformation(logger, "  IntervalHours: {Value}", Configuration.IntervalHours);
+        LoggingHelper.LogInformation(logger, "  EnableAutoDownload: {Value}", Configuration.EnableAutoDownload);
+        LoggingHelper.LogInformation(logger, "  EnableHoverPreview: {Value}", Configuration.EnableHoverPreview);
+        LoggingHelper.LogInformation(logger, "  InjectClientScript: {Value}", Configuration.InjectClientScript);
+        LoggingHelper.LogInformation(logger, "  HoverDelayMs: {Value}", Configuration.HoverDelayMs);
+        LoggingHelper.LogInformation(logger, "  EnableDebugLogging: {Value}", Configuration.EnableDebugLogging);
     }
 
     /// <summary>
@@ -183,7 +201,7 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
 
             string indexContents = File.ReadAllText(indexFile);
             string scriptReplace = "<script plugin=\"HoverTrailer\".*?></script>";
-            string scriptElement = string.Format("<script plugin=\"HoverTrailer\" version=\"1.0.0.0\" src=\"{0}/HoverTrailer/ClientScript\" defer></script>", basePath);
+            string scriptElement = string.Format("<script plugin=\"HoverTrailer\" version=\"0.0.0.1\" src=\"{0}/HoverTrailer/ClientScript\" defer></script>", basePath);
 
             if (indexContents.Contains(scriptElement))
             {
