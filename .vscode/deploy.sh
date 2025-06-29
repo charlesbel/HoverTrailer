@@ -49,9 +49,17 @@ NC='\033[0m' # No Color
 # Functions for each step
 clean_build() {
     echo -e "${YELLOW}Cleaning previous build...${NC}"
+
+    # Clean using dotnet clean
     dotnet clean "$PROJECT_FILE" -c "$BUILD_CONFIG"
-    if [ $? -ne 0 ]; then echo -e "${RED}❌ Clean failed${NC}"; exit 1; fi
-    echo -e "${GREEN}✅ Clean completed${NC}"
+    if [ $? -ne 0 ]; then echo -e "${RED}❌ Dotnet clean failed${NC}"; exit 1; fi
+
+    # Also manually remove bin and obj directories to ensure complete cleanup
+    echo -e "${YELLOW}Removing bin and obj directories...${NC}"
+    find . -name "bin" -type d -exec rm -rf {} + 2>/dev/null || true
+    find . -name "obj" -type d -exec rm -rf {} + 2>/dev/null || true
+
+    echo -e "${GREEN}✅ Clean completed (bin and obj directories removed)${NC}"
 }
 
 build_plugin() {

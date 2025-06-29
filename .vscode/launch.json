@@ -2,7 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Build and Deploy HoverTrailer",
+            "name": "Clean Build and Deploy HoverTrailer",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build-and-deploy",
@@ -30,6 +30,18 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "full-deploy",
+            "program": "dotnet",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "stopAtEntry": false,
+            "console": "internalConsole",
+            "internalConsoleOptions": "openOnSessionStart"
+        },
+        {
+            "name": "Clean Build Only",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "clean-build",
             "program": "dotnet",
             "args": [],
             "cwd": "${workspaceFolder}",

@@ -2,6 +2,18 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "clean",
+            "type": "shell",
+            "command": "./.vscode/deploy.sh",
+            "args": ["clean"],
+            "windows": {
+                "command": ".\\.vscode\\deploy.bat",
+                "args": ["clean"]
+            },
+            "group": "build",
+            "presentation": {"reveal": "always", "panel": "shared"}
+        },
+        {
             "label": "build",
             "type": "shell",
             "command": "./.vscode/deploy.sh",
@@ -38,16 +50,28 @@
             "presentation": {"reveal": "always", "panel": "shared"}
         },
         {
+          "label": "clean-build",
+          "dependsOrder": "sequence",
+          "dependsOn": ["clean", "build"],
+          "group": "build"
+        },
+        {
           "label": "build-and-deploy",
           "dependsOrder": "sequence",
-          "dependsOn": ["build", "deploy-to-remote"],
+          "dependsOn": ["clean", "build", "deploy-to-remote"],
           "group": {"kind": "build", "isDefault": true}
-      },
-      {
+        },
+        {
           "label": "full-deploy",
           "dependsOrder": "sequence",
-          "dependsOn": ["build", "deploy-to-remote", "restart-jellyfin-remote"],
+          "dependsOn": ["clean", "build", "deploy-to-remote", "restart-jellyfin-remote"],
           "group": "build"
-      }
+        },
+        {
+            "label": "quick-deploy",
+            "dependsOrder": "sequence",
+            "dependsOn": ["deploy-to-remote"],
+            "group": "build"
+        }
     ]
 }
