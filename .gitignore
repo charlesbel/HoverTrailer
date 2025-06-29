@@ -4,3 +4,5 @@ obj/
 .idea/
 artifacts
 base-plan.md
+# VS Code
+.vscode/.env

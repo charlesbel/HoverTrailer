@@ -1,0 +1,41 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Build and Deploy HoverTrailer",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-and-deploy",
+            "program": "dotnet",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "stopAtEntry": false,
+            "console": "internalConsole",
+            "internalConsoleOptions": "openOnSessionStart"
+        },
+        {
+            "name": "Quick Deploy (No Build)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "quick-deploy",
+            "program": "dotnet",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "stopAtEntry": false,
+            "console": "internalConsole",
+            "internalConsoleOptions": "openOnSessionStart"
+        },
+        {
+            "name": "Full Deploy (Clean + Build + Deploy + Restart)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "full-deploy",
+            "program": "dotnet",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "stopAtEntry": false,
+            "console": "internalConsole",
+            "internalConsoleOptions": "openOnSessionStart"
+        }
+    ]
+}
