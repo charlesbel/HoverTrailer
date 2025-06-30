@@ -5,23 +5,7 @@
   "overview": "A modern plugin that displays movie trailers when hovering over movie cards, providing a Netflix-style preview experience with customizable positioning, sizing, and visual effects.",
   "owner": "Fovty",
   "category": "General",
-  "imageUrl": "https://raw.githubusercontent.com/fovty/hovertrailer/main/logo/logo.png",
+  "imageUrl": "https://raw.githubusercontent.com/Fovty/HoverTrailer/refs/heads/master/logo/logo.png",
   "versions": [
-    {
-      "version": "0.0.0.17",
-      "changelog": "Release version 0.0.0.17",
-      "targetAbi": "10.10.0.0",
-      "sourceUrl": "https://github.com/fovty/hovertrailer/releases/download/v0.0.0.17/HoverTrailer-0.0.0.17-server.zip",
-      "checksum": "82e46be3cca97e9fbff0a533fa89988e",
-      "timestamp": "2025-06-30T20:32:38Z"
-    },
-    {
-      "version": "0.0.0.16",
-      "changelog": "Enhanced configuration with improved hover preview customization, simplified plugin architecture, and comprehensive project maturity improvements",
-      "targetAbi": "10.10.0.0",
-      "sourceUrl": "https://github.com/fovty/hovertrailer/releases/download/v0.0.0.16/HoverTrailer-0.0.0.16-server.zip",
-      "checksum": "TBD",
-      "timestamp": "2024-12-30T19:26:00Z"
-    }
   ]
 }

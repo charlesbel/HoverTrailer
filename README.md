@@ -8,17 +8,17 @@
         A modern Netflix-style hover trailer preview plugin for Jellyfin that displays movie trailers on hover.
     </p>
 
-[![Build](https://github.com/fovty/hovertrailer/actions/workflows/build.yml/badge.svg)](https://github.com/fovty/hovertrailer/actions/workflows/build.yml)
-[![CodeQL](https://github.com/fovty/hovertrailer/actions/workflows/codeql.yml/badge.svg)](https://github.com/fovty/hovertrailer/actions/workflows/codeql.yml)
-<a href="https://github.com/fovty/hovertrailer/releases">
-<img alt="Total GitHub Downloads" src="https://img.shields.io/github/downloads/fovty/hovertrailer/total?label=github%20downloads"/>
+[![Build](https://github.com/Fovty/HoverTrailer/actions/workflows/build.yml/badge.svg)](https://github.com/Fovty/HoverTrailer/actions/workflows/build.yml)
+[![CodeQL](https://github.com/Fovty/HoverTrailer/actions/workflows/codeql.yml/badge.svg)](https://github.com/Fovty/HoverTrailer/actions/workflows/codeql.yml)
+<a href="https://github.com/Fovty/HoverTrailer/releases">
+<img alt="Total GitHub Downloads" src="https://img.shields.io/github/downloads/Fovty/HoverTrailer/total?label=github%20downloads"/>
 </a>
 </div>
 
 ## Manifest URL
 
 ```
-https://raw.githubusercontent.com/fovty/hovertrailer/main/manifest.json
+https://raw.githubusercontent.com/Fovty/HoverTrailer/refs/heads/master/manifest.json
 ```
 
 ## Features
@@ -118,7 +118,7 @@ Access plugin settings through:
 ### Building from Source
 ```bash
 # Clone repository
-git clone https://github.com/fovty/hovertrailer.git
+git clone https://github.com/Fovty/HoverTrailer.git
 cd hovertrailer
 
 # Build plugin (warnings suppressed due to StyleCop/Code Analysis)
