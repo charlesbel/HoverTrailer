@@ -89,7 +89,7 @@ public class HoverTrailerController : ControllerBase
                 return BadRequest(error);
             }
 
-            var script = GetHoverTrailerScript(config.HoverDelayMs, config.EnableDebugLogging);
+            var script = GetHoverTrailerScript(config);
             LoggingHelper.LogDebug(_logger, "Successfully served client script");
             return Content(script, "application/javascript");
         }
@@ -358,17 +358,22 @@ public class HoverTrailerController : ControllerBase
     /// <summary>
     /// Gets the hover trailer client script.
     /// </summary>
-    /// <param name="hoverDelayMs">The hover delay in milliseconds.</param>
-    /// <param name="enableDebugLogging">Whether to enable debug logging.</param>
+    /// <param name="config">The plugin configuration.</param>
     /// <returns>The client script.</returns>
-    private static string GetHoverTrailerScript(int hoverDelayMs, bool enableDebugLogging)
+    private static string GetHoverTrailerScript(Configuration.PluginConfiguration config)
     {
         return $@"
 (function() {{
     'use strict';
 
-    const HOVER_DELAY = {hoverDelayMs};
-    const DEBUG_LOGGING = {enableDebugLogging.ToString().ToLower()};
+    const HOVER_DELAY = {config.HoverDelayMs};
+    const DEBUG_LOGGING = {config.EnableDebugLogging.ToString().ToLower()};
+    const PREVIEW_OFFSET_X = {config.PreviewOffsetX};
+    const PREVIEW_OFFSET_Y = {config.PreviewOffsetY};
+    const PREVIEW_WIDTH = {config.PreviewWidth};
+    const PREVIEW_HEIGHT = {config.PreviewHeight};
+    const PREVIEW_OPACITY = {config.PreviewOpacity.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)};
+    const PREVIEW_BORDER_RADIUS = {config.PreviewBorderRadius};
 
     let hoverTimeout;
     let currentPreview;
@@ -384,12 +389,12 @@ public class HoverTrailerController : ControllerBase
         const video = document.createElement('video');
         video.style.cssText = `
             position: absolute;
-            top: 50%;
-            left: 50%;
+            top: calc(50% + ${{PREVIEW_OFFSET_Y}}px);
+            left: calc(50% + ${{PREVIEW_OFFSET_X}}px);
             transform: translate(-50%, -50%);
-            max-width: 300px;
-            max-height: 200px;
-            border-radius: 8px;
+            max-width: ${{PREVIEW_WIDTH}}px;
+            max-height: ${{PREVIEW_HEIGHT}}px;
+            border-radius: ${{PREVIEW_BORDER_RADIUS}}px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.5);
             z-index: 1000;
             pointer-events: none;
@@ -422,7 +427,7 @@ public class HoverTrailerController : ControllerBase
                 const video = createVideoPreview(`/Videos/${{trailerInfo.Id}}/stream`);
 
                 video.addEventListener('loadeddata', () => {{
-                    video.style.opacity = '1';
+                    video.style.opacity = PREVIEW_OPACITY;
                     video.play().catch(e => log('Error playing video:', e));
                 }});
 

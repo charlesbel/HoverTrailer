@@ -99,7 +99,7 @@
                             <h3 class="sectionTitle">Debug Settings</h3>
                         </div>
                         <label class="emby-checkbox-label">
-                            <input id="EnableDebugMode" name="EnableDebugMode" type="checkbox" is="emby-checkbox" />
+                            <input id="EnableDebugLogging" name="EnableDebugLogging" type="checkbox" is="emby-checkbox" />
                             <span>Enable Debug Mode</span>
                         </label>
                         <div class="fieldDescription">Enable detailed logging for troubleshooting purposes</div>
@@ -136,7 +136,7 @@
                     document.querySelector('#PreviewBorderRadius').value = config.PreviewBorderRadius || 8;
 
                     // Debug Settings
-                    document.querySelector('#EnableDebugMode').checked = config.EnableDebugMode || false;
+                    document.querySelector('#EnableDebugLogging').checked = config.EnableDebugLogging || false;
 
                     Dashboard.hideLoadingMsg();
                 }).catch(function (error) {
@@ -163,7 +163,7 @@
                     config.PreviewBorderRadius = parseInt(document.querySelector('#PreviewBorderRadius').value) || 8;
 
                     // Debug Settings
-                    config.EnableDebugMode = document.querySelector('#EnableDebugMode').checked;
+                    config.EnableDebugLogging = document.querySelector('#EnableDebugLogging').checked;
 
                     ApiClient.updatePluginConfiguration(HoverTrailerConfig.pluginUniqueId, config).then(function (result) {
                         Dashboard.processPluginConfigurationUpdateResult(result);
