@@ -150,9 +150,10 @@ public class PluginConfiguration : BasePluginConfiguration
 
         // Preview sizing mode validation
         if (!string.Equals(PreviewSizingMode, "Manual", StringComparison.OrdinalIgnoreCase) &&
-            !string.Equals(PreviewSizingMode, "Percentage", StringComparison.OrdinalIgnoreCase))
+            !string.Equals(PreviewSizingMode, "Percentage", StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(PreviewSizingMode, "FitContent", StringComparison.OrdinalIgnoreCase))
         {
-            yield return "Preview Sizing Mode must be either 'Manual' or 'Percentage'";
+            yield return "Preview Sizing Mode must be 'Manual', 'Percentage', or 'FitContent'";
         }
     }
 

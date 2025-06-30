@@ -487,23 +487,36 @@ public class HoverTrailerController : ControllerBase
                 // Handle video metadata load for fit content mode
                 if (PREVIEW_SIZING_MODE === 'FitContent') {{
                     video.addEventListener('loadedmetadata', () => {{
-                        const videoAspectRatio = video.videoWidth / video.videoHeight;
-                        const cardAspectRatio = cardRect.width / cardRect.height;
+                        try {{
+                            log('Video metadata loaded for FitContent mode');
+                            // Recalculate cardRect in the event scope to ensure it's accessible
+                            const cardRect = currentCardElement.getBoundingClientRect();
+                            const videoAspectRatio = video.videoWidth / video.videoHeight;
+                            const cardAspectRatio = cardRect.width / cardRect.height;
 
-                        let newWidth, newHeight;
-                        if (videoAspectRatio > cardAspectRatio) {{
-                            // Video is wider than card, fit to width
-                            newWidth = cardRect.width;
-                            newHeight = Math.round(cardRect.width / videoAspectRatio);
-                        }} else {{
-                            // Video is taller than card, fit to height
-                            newHeight = cardRect.height;
-                            newWidth = Math.round(cardRect.height * videoAspectRatio);
+                            log(`Video dimensions: ${{video.videoWidth}}x${{video.videoHeight}} (aspect: ${{videoAspectRatio.toFixed(2)}})`);
+                            log(`Card dimensions: ${{cardRect.width}}x${{cardRect.height}} (aspect: ${{cardAspectRatio.toFixed(2)}})`);
+
+                            let newWidth, newHeight;
+                            if (videoAspectRatio > cardAspectRatio) {{
+                                // Video is wider than card, fit to width
+                                newWidth = cardRect.width;
+                                newHeight = Math.round(cardRect.width / videoAspectRatio);
+                            }} else {{
+                                // Video is taller than card, fit to height
+                                newHeight = cardRect.height;
+                                newWidth = Math.round(cardRect.height * videoAspectRatio);
+                            }}
+
+                            log(`Calculated fit dimensions: ${{newWidth}}x${{newHeight}}`);
+
+                            container.style.width = newWidth + 'px';
+                            container.style.height = newHeight + 'px';
+                            log('Adjusted container for fit content mode:', newWidth + 'x' + newHeight);
+                        }} catch (error) {{
+                            console.error('Error in FitContent loadedmetadata handler:', error);
+                            log(`FitContent error: ${{error.message}}`);
                         }}
-
-                        container.style.width = newWidth + 'px';
-                        container.style.height = newHeight + 'px';
-                        log('Adjusted container for fit content mode:', newWidth + 'x' + newHeight);
                     }});
                 }}
 
