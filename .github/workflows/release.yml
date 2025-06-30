@@ -44,7 +44,7 @@ jobs:
 
     - name: Create Release Package
       run: |
-        # Create plugin package with proper naming convention
+        # Create plugin package with all published files
         cd publish
         zip -r "../HoverTrailer-${VERSION}-server.zip" .
         cd ..
