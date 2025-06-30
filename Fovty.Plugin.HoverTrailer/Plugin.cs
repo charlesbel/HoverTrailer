@@ -67,18 +67,15 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
 
         // Log final configuration state after initialization
         LoggingHelper.LogInformation(logger, "Plugin initialization completed. Configuration state:");
-
-        LoggingHelper.LogInformation(logger, "  EnableTrailerDownload: {Value}", Configuration.EnableTrailerDownload);
-        LoggingHelper.LogInformation(logger, "  PathToYtDlp: {Value}", Configuration.PathToYtDlp);
-
-        LoggingHelper.LogInformation(logger, "  TrailerQuality: {Value}", Configuration.TrailerQuality);
-        LoggingHelper.LogInformation(logger, "  MaxTrailerDurationSeconds: {Value}", Configuration.MaxTrailerDurationSeconds);
-        LoggingHelper.LogInformation(logger, "  MaxConcurrentDownloads: {Value}", Configuration.MaxConcurrentDownloads);
-        LoggingHelper.LogInformation(logger, "  IntervalHours: {Value}", Configuration.IntervalHours);
-        LoggingHelper.LogInformation(logger, "  EnableAutoDownload: {Value}", Configuration.EnableAutoDownload);
         LoggingHelper.LogInformation(logger, "  EnableHoverPreview: {Value}", Configuration.EnableHoverPreview);
         LoggingHelper.LogInformation(logger, "  InjectClientScript: {Value}", Configuration.InjectClientScript);
         LoggingHelper.LogInformation(logger, "  HoverDelayMs: {Value}", Configuration.HoverDelayMs);
+        LoggingHelper.LogInformation(logger, "  PreviewOffsetX: {Value}", Configuration.PreviewOffsetX);
+        LoggingHelper.LogInformation(logger, "  PreviewOffsetY: {Value}", Configuration.PreviewOffsetY);
+        LoggingHelper.LogInformation(logger, "  PreviewWidth: {Value}", Configuration.PreviewWidth);
+        LoggingHelper.LogInformation(logger, "  PreviewHeight: {Value}", Configuration.PreviewHeight);
+        LoggingHelper.LogInformation(logger, "  PreviewOpacity: {Value}", Configuration.PreviewOpacity);
+        LoggingHelper.LogInformation(logger, "  PreviewBorderRadius: {Value}", Configuration.PreviewBorderRadius);
         LoggingHelper.LogInformation(logger, "  EnableDebugLogging: {Value}", Configuration.EnableDebugLogging);
     }
 
@@ -199,7 +196,7 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
 
             string indexContents = File.ReadAllText(indexFile);
             string scriptReplace = "<script plugin=\"HoverTrailer\".*?></script>";
-            string scriptElement = string.Format("<script plugin=\"HoverTrailer\" version=\"0.0.0.5\" src=\"{0}/HoverTrailer/ClientScript\" defer></script>", basePath);
+            string scriptElement = string.Format("<script plugin=\"HoverTrailer\" version=\"0.0.0.7\" src=\"{0}/HoverTrailer/ClientScript\" defer></script>", basePath);
 
             if (indexContents.Contains(scriptElement))
             {

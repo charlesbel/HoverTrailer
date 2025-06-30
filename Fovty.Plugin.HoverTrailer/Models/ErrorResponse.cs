@@ -81,8 +81,6 @@ public class ErrorResponse
         var errorCode = exception switch
         {
             Exceptions.ConfigurationException => "CONFIG_ERROR",
-            Exceptions.TMDbApiException => "TMDB_API_ERROR",
-            Exceptions.YtDlpException => "YTDLP_ERROR",
             Exceptions.TrailerException => "TRAILER_ERROR",
             Exceptions.HoverTrailerException hte => hte.ErrorCode,
             ArgumentException => "INVALID_ARGUMENT",

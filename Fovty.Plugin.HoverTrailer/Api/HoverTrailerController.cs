@@ -341,10 +341,7 @@ public class HoverTrailerController : ControllerBase
             var status = new HoverTrailerStatus
             {
                 IsEnabled = config?.EnableHoverPreview ?? false,
-                HasYtDlpPath = !string.IsNullOrEmpty(config?.PathToYtDlp),
-                AutoDownloadEnabled = config?.EnableAutoDownload ?? false,
-                HoverDelayMs = config?.HoverDelayMs ?? 1000,
-                TrailerQuality = config?.TrailerQuality ?? "720p"
+                HoverDelayMs = config?.HoverDelayMs ?? 1000
             };
 
             LoggingHelper.LogDebug(_logger, "Successfully retrieved plugin status");
@@ -654,27 +651,7 @@ public class HoverTrailerStatus
     public bool IsEnabled { get; set; }
 
     /// <summary>
-    /// Gets or sets a value indicating whether TMDb API key is configured.
-    /// </summary>
-    public bool HasTmdbApiKey { get; set; }
-
-    /// <summary>
-    /// Gets or sets a value indicating whether yt-dlp path is configured.
-    /// </summary>
-    public bool HasYtDlpPath { get; set; }
-
-    /// <summary>
-    /// Gets or sets a value indicating whether auto download is enabled.
-    /// </summary>
-    public bool AutoDownloadEnabled { get; set; }
-
-    /// <summary>
     /// Gets or sets the hover delay in milliseconds.
     /// </summary>
     public int HoverDelayMs { get; set; }
-
-    /// <summary>
-    /// Gets or sets the trailer quality.
-    /// </summary>
-    public string? TrailerQuality { get; set; }
 }

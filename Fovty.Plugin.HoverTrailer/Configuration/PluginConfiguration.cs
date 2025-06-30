@@ -12,40 +12,6 @@ namespace Fovty.Plugin.HoverTrailer.Configuration;
 /// </summary>
 public class PluginConfiguration : BasePluginConfiguration
 {
-    /// <summary>
-    /// Gets or sets a value indicating whether trailer downloading is enabled.
-    /// </summary>
-    public bool EnableTrailerDownload { get; set; } = false;
-
-    /// <summary>
-    /// Gets or sets the path to the yt-dlp executable.
-    /// </summary>
-    public string PathToYtDlp { get; set; } = "yt-dlp";
-
-    /// <summary>
-    /// Gets or sets the trailer quality preference.
-    /// </summary>
-    public string TrailerQuality { get; set; } = "720p";
-
-    /// <summary>
-    /// Gets or sets the maximum trailer duration in seconds.
-    /// </summary>
-    public int MaxTrailerDurationSeconds { get; set; } = 180;
-
-    /// <summary>
-    /// Gets or sets the maximum number of concurrent downloads.
-    /// </summary>
-    public int MaxConcurrentDownloads { get; set; } = 2;
-
-    /// <summary>
-    /// Gets or sets the interval in hours for automatic scanning.
-    /// </summary>
-    public int IntervalHours { get; set; } = 24;
-
-    /// <summary>
-    /// Gets or sets a value indicating whether automatic trailer downloading is enabled.
-    /// </summary>
-    public bool EnableAutoDownload { get; set; } = false;
 
     /// <summary>
     /// Gets or sets a value indicating whether hover preview is enabled.
@@ -61,6 +27,36 @@ public class PluginConfiguration : BasePluginConfiguration
     /// Gets or sets the hover delay in milliseconds before starting preview.
     /// </summary>
     public int HoverDelayMs { get; set; } = 1000;
+
+    /// <summary>
+    /// Gets or sets the horizontal offset from default position in pixels.
+    /// </summary>
+    public int PreviewOffsetX { get; set; } = 0;
+
+    /// <summary>
+    /// Gets or sets the vertical offset from default position in pixels.
+    /// </summary>
+    public int PreviewOffsetY { get; set; } = 0;
+
+    /// <summary>
+    /// Gets or sets the preview width in pixels.
+    /// </summary>
+    public int PreviewWidth { get; set; } = 300;
+
+    /// <summary>
+    /// Gets or sets the preview height in pixels.
+    /// </summary>
+    public int PreviewHeight { get; set; } = 200;
+
+    /// <summary>
+    /// Gets or sets the preview opacity (0.0 - 1.0).
+    /// </summary>
+    public double PreviewOpacity { get; set; } = 0.9;
+
+    /// <summary>
+    /// Gets or sets the preview border radius in pixels.
+    /// </summary>
+    public int PreviewBorderRadius { get; set; } = 8;
 
     /// <summary>
     /// Gets or sets a value indicating whether to enable debug logging.
@@ -87,50 +83,7 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <returns>An enumerable of validation error messages.</returns>
     public IEnumerable<string> GetValidationErrors()
     {
-        // yt-dlp path validation (only if trailer download is enabled)
-        if (EnableTrailerDownload && string.IsNullOrWhiteSpace(PathToYtDlp))
-        {
-            yield return "Path to yt-dlp cannot be empty when trailer download is enabled";
-        }
-
-        // Trailer quality validation
-        if (string.IsNullOrWhiteSpace(TrailerQuality))
-        {
-            yield return "Trailer Quality cannot be empty";
-        }
-        else if (!IsValidTrailerQuality(TrailerQuality))
-        {
-            yield return $"Trailer Quality '{TrailerQuality}' is not supported";
-        }
-
-        // Numeric range validations
-        if (MaxTrailerDurationSeconds <= 0)
-        {
-            yield return "Max Trailer Duration must be greater than 0";
-        }
-        else if (MaxTrailerDurationSeconds > 3600)
-        {
-            yield return "Max Trailer Duration cannot exceed 3600 seconds (1 hour)";
-        }
-
-        if (MaxConcurrentDownloads <= 0)
-        {
-            yield return "Max Concurrent Downloads must be greater than 0";
-        }
-        else if (MaxConcurrentDownloads > 10)
-        {
-            yield return "Max Concurrent Downloads cannot exceed 10";
-        }
-
-        if (IntervalHours <= 0)
-        {
-            yield return "Interval Hours must be greater than 0";
-        }
-        else if (IntervalHours > 8760) // 1 year
-        {
-            yield return "Interval Hours cannot exceed 8760 (1 year)";
-        }
-
+        // Hover delay validation
         if (HoverDelayMs < 0)
         {
             yield return "Hover Delay cannot be negative";
@@ -138,6 +91,40 @@ public class PluginConfiguration : BasePluginConfiguration
         else if (HoverDelayMs > 10000)
         {
             yield return "Hover Delay cannot exceed 10000ms (10 seconds)";
+        }
+
+        // Preview offset validations
+        if (PreviewOffsetX < -500 || PreviewOffsetX > 500)
+        {
+            yield return "Preview Offset X must be between -500 and 500 pixels";
+        }
+
+        if (PreviewOffsetY < -500 || PreviewOffsetY > 500)
+        {
+            yield return "Preview Offset Y must be between -500 and 500 pixels";
+        }
+
+        // Preview size validations
+        if (PreviewWidth < 200 || PreviewWidth > 800)
+        {
+            yield return "Preview Width must be between 200 and 800 pixels";
+        }
+
+        if (PreviewHeight < 150 || PreviewHeight > 600)
+        {
+            yield return "Preview Height must be between 150 and 600 pixels";
+        }
+
+        // Preview opacity validation
+        if (PreviewOpacity < 0.1 || PreviewOpacity > 1.0)
+        {
+            yield return "Preview Opacity must be between 0.1 and 1.0";
+        }
+
+        // Preview border radius validation
+        if (PreviewBorderRadius < 0 || PreviewBorderRadius > 20)
+        {
+            yield return "Preview Border Radius must be between 0 and 20 pixels";
         }
     }
 
@@ -159,59 +146,15 @@ public class PluginConfiguration : BasePluginConfiguration
     {
         return propertyName switch
         {
-
-            nameof(PathToYtDlp) => ValidatePathToYtDlp(),
-
-            nameof(TrailerQuality) => ValidateTrailerQuality(),
-            nameof(MaxTrailerDurationSeconds) => ValidateMaxTrailerDurationSeconds(),
-            nameof(MaxConcurrentDownloads) => ValidateMaxConcurrentDownloads(),
-            nameof(IntervalHours) => ValidateIntervalHours(),
             nameof(HoverDelayMs) => ValidateHoverDelayMs(),
+            nameof(PreviewOffsetX) => ValidatePreviewOffsetX(),
+            nameof(PreviewOffsetY) => ValidatePreviewOffsetY(),
+            nameof(PreviewWidth) => ValidatePreviewWidth(),
+            nameof(PreviewHeight) => ValidatePreviewHeight(),
+            nameof(PreviewOpacity) => ValidatePreviewOpacity(),
+            nameof(PreviewBorderRadius) => ValidatePreviewBorderRadius(),
             _ => null
         };
-    }
-
-    private string? ValidatePathToYtDlp()
-    {
-        if (EnableTrailerDownload && string.IsNullOrWhiteSpace(PathToYtDlp))
-            return "Path to yt-dlp cannot be empty when trailer download is enabled";
-        return null;
-    }
-
-    private string? ValidateTrailerQuality()
-    {
-        if (string.IsNullOrWhiteSpace(TrailerQuality))
-            return "Trailer Quality cannot be empty";
-        if (!IsValidTrailerQuality(TrailerQuality))
-            return $"Trailer Quality '{TrailerQuality}' is not supported";
-        return null;
-    }
-
-    private string? ValidateMaxTrailerDurationSeconds()
-    {
-        if (MaxTrailerDurationSeconds <= 0)
-            return "Max Trailer Duration must be greater than 0";
-        if (MaxTrailerDurationSeconds > 3600)
-            return "Max Trailer Duration cannot exceed 3600 seconds (1 hour)";
-        return null;
-    }
-
-    private string? ValidateMaxConcurrentDownloads()
-    {
-        if (MaxConcurrentDownloads <= 0)
-            return "Max Concurrent Downloads must be greater than 0";
-        if (MaxConcurrentDownloads > 10)
-            return "Max Concurrent Downloads cannot exceed 10";
-        return null;
-    }
-
-    private string? ValidateIntervalHours()
-    {
-        if (IntervalHours <= 0)
-            return "Interval Hours must be greater than 0";
-        if (IntervalHours > 8760)
-            return "Interval Hours cannot exceed 8760 (1 year)";
-        return null;
     }
 
     private string? ValidateHoverDelayMs()
@@ -223,16 +166,45 @@ public class PluginConfiguration : BasePluginConfiguration
         return null;
     }
 
-
-    private static bool IsValidTrailerQuality(string quality)
+    private string? ValidatePreviewOffsetX()
     {
-        // Common video quality options supported by yt-dlp
-        var validQualities = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            "144p", "240p", "360p", "480p", "720p", "1080p", "1440p", "2160p", "4320p",
-            "worst", "best", "bestvideo", "worstvideo", "bestaudio", "worstaudio"
-        };
+        if (PreviewOffsetX < -500 || PreviewOffsetX > 500)
+            return "Preview Offset X must be between -500 and 500 pixels";
+        return null;
+    }
 
-        return validQualities.Contains(quality);
+    private string? ValidatePreviewOffsetY()
+    {
+        if (PreviewOffsetY < -500 || PreviewOffsetY > 500)
+            return "Preview Offset Y must be between -500 and 500 pixels";
+        return null;
+    }
+
+    private string? ValidatePreviewWidth()
+    {
+        if (PreviewWidth < 200 || PreviewWidth > 800)
+            return "Preview Width must be between 200 and 800 pixels";
+        return null;
+    }
+
+    private string? ValidatePreviewHeight()
+    {
+        if (PreviewHeight < 150 || PreviewHeight > 600)
+            return "Preview Height must be between 150 and 600 pixels";
+        return null;
+    }
+
+    private string? ValidatePreviewOpacity()
+    {
+        if (PreviewOpacity < 0.1 || PreviewOpacity > 1.0)
+            return "Preview Opacity must be between 0.1 and 1.0";
+        return null;
+    }
+
+    private string? ValidatePreviewBorderRadius()
+    {
+        if (PreviewBorderRadius < 0 || PreviewBorderRadius > 20)
+            return "Preview Border Radius must be between 0 and 20 pixels";
+        return null;
     }
 }

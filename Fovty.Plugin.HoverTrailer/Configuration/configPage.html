@@ -9,106 +9,20 @@
         <div data-role="content">
             <div class="content-primary">
                 <form id="HoverTrailerConfigForm">
+                    <!-- Header with trailarr recommendation -->
                     <div class="sectionTitleContainer flex align-items-center">
-                        <h2 class="sectionTitle">Native Trailer Detection (Recommended)</h2>
-                    </div>
-                    <div class="fieldDescription" style="margin-bottom: 1em; padding: 0.5em; background-color: rgba(0, 255, 0, 0.1); border-left: 3px solid #90EE90;">
-                        <strong>✅ Recommended:</strong> This plugin automatically detects trailers already available in your Jellyfin library using Jellyfin's native API. This is the fastest and most reliable method that requires no additional configuration.
+                        <h2 class="sectionTitle">HoverTrailer Plugin Configuration</h2>
                     </div>
 
-                    <div class="verticalSection">
-                        <div class="sectionTitleContainer flex align-items-center">
-                            <h3 class="sectionTitle">TMDb API Settings</h3>
-                        </div>
-                        <div class="inputContainer">
-                            <label class="inputLabel inputLabelUnfocused" for="TMDbApiKey">TMDb API Key:</label>
-                            <input id="TMDbApiKey" name="TMDbApiKey" type="password" is="emby-input" class="emby-input" />
-                            <div class="fieldDescription">Required for trailer metadata. Get your API key from <a href="https://www.themoviedb.org/settings/api" target="_blank">TMDb</a></div>
-                        </div>
-                        <label class="emby-checkbox-label">
-                            <input id="IncludeAdultContent" name="IncludeAdultContent" type="checkbox" is="emby-checkbox" />
-                            <span>Include Adult Content</span>
-                        </label>
-                        <div class="fieldDescription">Include adult content in trailer searches</div>
-                        <div class="selectContainer">
-                            <label class="selectLabel" for="PreferredLanguage">Preferred Language:</label>
-                            <select id="PreferredLanguage" name="PreferredLanguage" is="emby-select" class="emby-select-withcolor emby-select">
-                                <option value="en">English</option>
-                                <option value="es">Spanish</option>
-                                <option value="fr">French</option>
-                                <option value="de">German</option>
-                                <option value="it">Italian</option>
-                                <option value="pt">Portuguese</option>
-                                <option value="ru">Russian</option>
-                                <option value="ja">Japanese</option>
-                                <option value="ko">Korean</option>
-                                <option value="zh">Chinese</option>
-                            </select>
-                            <div class="fieldDescription">Language preference for trailer metadata</div>
+                    <div class="selectContainer">
+                        <div class="fieldDescription">
+                            <strong>Recommendation:</strong> For downloading trailers, consider using
+                            <a href="https://github.com/nandyalu/trailarr" target="_blank">trailarr</a>
+                            to automatically download and organize trailers for your media library.
                         </div>
                     </div>
 
-                    <div class="verticalSection">
-                        <div class="sectionTitleContainer flex align-items-center">
-                            <h3 class="sectionTitle">External Download (Advanced)</h3>
-                        </div>
-                        <div class="fieldDescription" style="margin-bottom: 1em; padding: 0.5em; background-color: rgba(255, 165, 0, 0.1); border-left: 3px solid #FFA500;">
-                            <strong>⚠️ Advanced Feature:</strong> These options enable downloading trailers from external sources using yt-dlp when local trailers are not available. This requires additional system resources and may have varying reliability.
-                        </div>
-                        <label class="emby-checkbox-label">
-                            <input id="EnableTrailerDownload" name="EnableTrailerDownload" type="checkbox" is="emby-checkbox" />
-                            <span>Enable Trailer Downloads</span>
-                        </label>
-                        <div class="fieldDescription">Enable downloading of movie trailers from external sources using yt-dlp when not found locally</div>
-                        <div class="inputContainer">
-                            <label class="inputLabel inputLabelUnfocused" for="PathToYtDlp">yt-dlp Path:</label>
-                            <input id="PathToYtDlp" name="PathToYtDlp" type="text" is="emby-input" class="emby-input" />
-                            <div class="fieldDescription">Path to yt-dlp executable (leave empty for system PATH)</div>
-                        </div>
-                        <div class="inputContainer">
-                            <label class="inputLabel inputLabelUnfocused" for="OutputPath">Output Directory:</label>
-                            <input id="OutputPath" name="OutputPath" type="text" is="emby-input" class="emby-input" />
-                            <div class="fieldDescription">Directory to store downloaded trailers (leave empty for plugin data directory)</div>
-                        </div>
-                        <div class="selectContainer">
-                            <label class="selectLabel" for="TrailerQuality">Video Quality:</label>
-                            <select id="TrailerQuality" name="TrailerQuality" is="emby-select" class="emby-select-withcolor emby-select">
-                                <option value="best">Best Available</option>
-                                <option value="worst">Worst Available</option>
-                                <option value="720p">720p</option>
-                                <option value="480p">480p</option>
-                                <option value="360p">360p</option>
-                            </select>
-                            <div class="fieldDescription">Quality preference for downloaded trailers</div>
-                        </div>
-                        <div class="inputContainer">
-                            <label class="inputLabel inputLabelUnfocused" for="MaxTrailerDurationSeconds">Max Duration (seconds):</label>
-                            <input id="MaxTrailerDurationSeconds" name="MaxTrailerDurationSeconds" type="number" min="30" max="600" is="emby-input" class="emby-input" />
-                            <div class="fieldDescription">Maximum trailer duration to download (30-600 seconds)</div>
-                        </div>
-                        <div class="inputContainer">
-                            <label class="inputLabel inputLabelUnfocused" for="MaxConcurrentDownloads">Max Concurrent Downloads:</label>
-                            <input id="MaxConcurrentDownloads" name="MaxConcurrentDownloads" type="number" min="1" max="10" is="emby-input" class="emby-input" />
-                            <div class="fieldDescription">Maximum number of simultaneous downloads (1-10)</div>
-                        </div>
-                    </div>
-
-                    <div class="verticalSection">
-                        <div class="sectionTitleContainer flex align-items-center">
-                            <h3 class="sectionTitle">Automatic Scanning (Advanced)</h3>
-                        </div>
-                        <label class="emby-checkbox-label">
-                            <input id="EnableAutoDownload" name="EnableAutoDownload" type="checkbox" is="emby-checkbox" />
-                            <span>Enable Automatic Downloads</span>
-                        </label>
-                        <div class="fieldDescription">Automatically download trailers from external sources for new movies during scanning (requires "Enable Trailer Downloads" above)</div>
-                        <div class="inputContainer">
-                            <label class="inputLabel inputLabelUnfocused" for="IntervalHours">Scan Interval (hours):</label>
-                            <input id="IntervalHours" name="IntervalHours" type="number" min="1" max="168" is="emby-input" class="emby-input" />
-                            <div class="fieldDescription">How often to scan for new trailers (1-168 hours)</div>
-                        </div>
-                    </div>
-
+                    <!-- Hover Preview Settings (existing) -->
                     <div class="verticalSection">
                         <div class="sectionTitleContainer flex align-items-center">
                             <h3 class="sectionTitle">Hover Preview Settings</h3>
@@ -125,18 +39,68 @@
                         <div class="fieldDescription">Inject client-side script for hover preview functionality</div>
                         <div class="inputContainer">
                             <label class="inputLabel inputLabelUnfocused" for="HoverDelayMs">Hover Delay (ms):</label>
-                            <input id="HoverDelayMs" name="HoverDelayMs" type="number" min="100" max="3000" is="emby-input" class="emby-input" />
-                            <div class="fieldDescription">Delay before showing hover preview (100-3000 milliseconds)</div>
+                            <input id="HoverDelayMs" name="HoverDelayMs" type="number" min="100" max="10000" is="emby-input" class="emby-input" />
+                            <div class="fieldDescription">Delay before showing hover preview (100-10000 milliseconds)</div>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="PreviewDurationMs">Preview Duration (ms):</label>
+                            <input id="PreviewDurationMs" name="PreviewDurationMs" type="number" min="5000" max="60000" is="emby-input" class="emby-input" />
+                            <div class="fieldDescription">How long to show the preview (5000-60000 milliseconds)</div>
                         </div>
                     </div>
 
+                    <!-- NEW: Hover Preview Customization -->
+                    <div class="verticalSection">
+                        <div class="sectionTitleContainer flex align-items-center">
+                            <h3 class="sectionTitle">Hover Preview Customization</h3>
+                        </div>
+                        <div class="fieldDescription">Customize the appearance and positioning of hover previews</div>
+
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="PreviewOffsetX">Horizontal Offset (px):</label>
+                            <input id="PreviewOffsetX" name="PreviewOffsetX" type="number" min="-500" max="500" is="emby-input" class="emby-input" />
+                            <div class="fieldDescription">Horizontal offset from default position (-500 to +500 pixels)</div>
+                        </div>
+
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="PreviewOffsetY">Vertical Offset (px):</label>
+                            <input id="PreviewOffsetY" name="PreviewOffsetY" type="number" min="-500" max="500" is="emby-input" class="emby-input" />
+                            <div class="fieldDescription">Vertical offset from default position (-500 to +500 pixels)</div>
+                        </div>
+
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="PreviewWidth">Preview Width (px):</label>
+                            <input id="PreviewWidth" name="PreviewWidth" type="number" min="200" max="800" is="emby-input" class="emby-input" />
+                            <div class="fieldDescription">Width of the preview window (200-800 pixels)</div>
+                        </div>
+
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="PreviewHeight">Preview Height (px):</label>
+                            <input id="PreviewHeight" name="PreviewHeight" type="number" min="150" max="600" is="emby-input" class="emby-input" />
+                            <div class="fieldDescription">Height of the preview window (150-600 pixels)</div>
+                        </div>
+
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="PreviewOpacity">Preview Opacity:</label>
+                            <input id="PreviewOpacity" name="PreviewOpacity" type="number" min="0.1" max="1.0" step="0.1" is="emby-input" class="emby-input" />
+                            <div class="fieldDescription">Transparency of the preview (0.1 = mostly transparent, 1.0 = opaque)</div>
+                        </div>
+
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="PreviewBorderRadius">Border Radius (px):</label>
+                            <input id="PreviewBorderRadius" name="PreviewBorderRadius" type="number" min="0" max="20" is="emby-input" class="emby-input" />
+                            <div class="fieldDescription">Rounded corners for the preview (0-20 pixels)</div>
+                        </div>
+                    </div>
+
+                    <!-- Debug Settings (existing) -->
                     <div class="verticalSection">
                         <div class="sectionTitleContainer flex align-items-center">
                             <h3 class="sectionTitle">Debug Settings</h3>
                         </div>
                         <label class="emby-checkbox-label">
-                            <input id="EnableDebugLogging" name="EnableDebugLogging" type="checkbox" is="emby-checkbox" />
-                            <span>Enable Debug Logging</span>
+                            <input id="EnableDebugMode" name="EnableDebugMode" type="checkbox" is="emby-checkbox" />
+                            <span>Enable Debug Mode</span>
                         </label>
                         <div class="fieldDescription">Enable detailed logging for troubleshooting purposes</div>
                     </div>
@@ -157,21 +121,23 @@
             function loadConfiguration() {
                 Dashboard.showLoadingMsg();
                 ApiClient.getPluginConfiguration(HoverTrailerConfig.pluginUniqueId).then(function (config) {
-                    document.querySelector('#TMDbApiKey').value = config.TMDbApiKey || '';
-                    document.querySelector('#IncludeAdultContent').checked = config.IncludeAdultContent || false;
-                    document.querySelector('#PreferredLanguage').value = config.PreferredLanguage || 'en';
-                    document.querySelector('#EnableTrailerDownload').checked = config.EnableTrailerDownload || false;
-                    document.querySelector('#PathToYtDlp').value = config.PathToYtDlp || '';
-                    document.querySelector('#OutputPath').value = config.OutputPath || '';
-                    document.querySelector('#TrailerQuality').value = config.TrailerQuality || 'best';
-                    document.querySelector('#MaxTrailerDurationSeconds').value = config.MaxTrailerDurationSeconds || 180;
-                    document.querySelector('#MaxConcurrentDownloads').value = config.MaxConcurrentDownloads || 2;
-                    document.querySelector('#EnableAutoDownload').checked = config.EnableAutoDownload !== false;
-                    document.querySelector('#IntervalHours').value = config.IntervalHours || 24;
+                    // Hover Preview Settings
                     document.querySelector('#EnableHoverPreview').checked = config.EnableHoverPreview !== false;
                     document.querySelector('#InjectClientScript').checked = config.InjectClientScript !== false;
                     document.querySelector('#HoverDelayMs').value = config.HoverDelayMs || 1000;
-                    document.querySelector('#EnableDebugLogging').checked = config.EnableDebugLogging || false;
+                    document.querySelector('#PreviewDurationMs').value = config.PreviewDurationMs || 30000;
+
+                    // Hover Preview Customization
+                    document.querySelector('#PreviewOffsetX').value = config.PreviewOffsetX || 0;
+                    document.querySelector('#PreviewOffsetY').value = config.PreviewOffsetY || 0;
+                    document.querySelector('#PreviewWidth').value = config.PreviewWidth || 300;
+                    document.querySelector('#PreviewHeight').value = config.PreviewHeight || 200;
+                    document.querySelector('#PreviewOpacity').value = config.PreviewOpacity || 0.9;
+                    document.querySelector('#PreviewBorderRadius').value = config.PreviewBorderRadius || 8;
+
+                    // Debug Settings
+                    document.querySelector('#EnableDebugMode').checked = config.EnableDebugMode || false;
+
                     Dashboard.hideLoadingMsg();
                 }).catch(function (error) {
                     console.error('Error loading configuration:', error);
@@ -182,21 +148,22 @@
             function saveConfiguration() {
                 Dashboard.showLoadingMsg();
                 ApiClient.getPluginConfiguration(HoverTrailerConfig.pluginUniqueId).then(function (config) {
-                    config.TMDbApiKey = document.querySelector('#TMDbApiKey').value;
-                    config.IncludeAdultContent = document.querySelector('#IncludeAdultContent').checked;
-                    config.PreferredLanguage = document.querySelector('#PreferredLanguage').value;
-                    config.EnableTrailerDownload = document.querySelector('#EnableTrailerDownload').checked;
-                    config.PathToYtDlp = document.querySelector('#PathToYtDlp').value;
-                    config.OutputPath = document.querySelector('#OutputPath').value;
-                    config.TrailerQuality = document.querySelector('#TrailerQuality').value;
-                    config.MaxTrailerDurationSeconds = parseInt(document.querySelector('#MaxTrailerDurationSeconds').value) || 180;
-                    config.MaxConcurrentDownloads = parseInt(document.querySelector('#MaxConcurrentDownloads').value) || 2;
-                    config.EnableAutoDownload = document.querySelector('#EnableAutoDownload').checked;
-                    config.IntervalHours = parseInt(document.querySelector('#IntervalHours').value) || 24;
+                    // Hover Preview Settings
                     config.EnableHoverPreview = document.querySelector('#EnableHoverPreview').checked;
                     config.InjectClientScript = document.querySelector('#InjectClientScript').checked;
                     config.HoverDelayMs = parseInt(document.querySelector('#HoverDelayMs').value) || 1000;
-                    config.EnableDebugLogging = document.querySelector('#EnableDebugLogging').checked;
+                    config.PreviewDurationMs = parseInt(document.querySelector('#PreviewDurationMs').value) || 30000;
+
+                    // Hover Preview Customization
+                    config.PreviewOffsetX = parseInt(document.querySelector('#PreviewOffsetX').value) || 0;
+                    config.PreviewOffsetY = parseInt(document.querySelector('#PreviewOffsetY').value) || 0;
+                    config.PreviewWidth = parseInt(document.querySelector('#PreviewWidth').value) || 300;
+                    config.PreviewHeight = parseInt(document.querySelector('#PreviewHeight').value) || 200;
+                    config.PreviewOpacity = parseFloat(document.querySelector('#PreviewOpacity').value) || 0.9;
+                    config.PreviewBorderRadius = parseInt(document.querySelector('#PreviewBorderRadius').value) || 8;
+
+                    // Debug Settings
+                    config.EnableDebugMode = document.querySelector('#EnableDebugMode').checked;
 
                     ApiClient.updatePluginConfiguration(HoverTrailerConfig.pluginUniqueId, config).then(function (result) {
                         Dashboard.processPluginConfigurationUpdateResult(result);
