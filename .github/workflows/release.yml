@@ -112,7 +112,7 @@ jobs:
           echo "No changes to commit"
         else
           git commit -m "Update manifest and version for release v${VERSION}"
-          git push
+          git push origin HEAD:master
         fi
 
     - name: Create GitHub Release
