@@ -109,14 +109,14 @@ public class PluginConfiguration : BasePluginConfiguration
         }
 
         // Preview offset validations
-        if (PreviewOffsetX < -500 || PreviewOffsetX > 500)
+        if (PreviewOffsetX < -2000 || PreviewOffsetX > 2000)
         {
-            yield return "Preview Offset X must be between -500 and 500 pixels";
+            yield return "Preview Offset X must be between -2000 and 2000 pixels";
         }
 
-        if (PreviewOffsetY < -500 || PreviewOffsetY > 500)
+        if (PreviewOffsetY < -2000 || PreviewOffsetY > 2000)
         {
-            yield return "Preview Offset Y must be between -500 and 500 pixels";
+            yield return "Preview Offset Y must be between -2000 and 2000 pixels";
         }
 
         // Preview size validations
@@ -131,21 +131,21 @@ public class PluginConfiguration : BasePluginConfiguration
         }
 
         // Preview opacity validation
-        if (PreviewOpacity < 0.1 || PreviewOpacity > 1.0)
+        if (PreviewOpacity < 0.0 || PreviewOpacity > 1.0)
         {
-            yield return "Preview Opacity must be between 0.1 and 1.0";
+            yield return "Preview Opacity must be between 0.0 and 1.0";
         }
 
         // Preview border radius validation
-        if (PreviewBorderRadius < 0 || PreviewBorderRadius > 20)
+        if (PreviewBorderRadius < 0 || PreviewBorderRadius > 50)
         {
-            yield return "Preview Border Radius must be between 0 and 20 pixels";
+            yield return "Preview Border Radius must be between 0 and 50 pixels";
         }
 
         // Preview size percentage validation
-        if (PreviewSizePercentage <= 0 || PreviewSizePercentage > 300)
+        if (PreviewSizePercentage < 50 || PreviewSizePercentage > 1500)
         {
-            yield return "Preview Size Percentage must be between 1 and 300";
+            yield return "Preview Size Percentage must be between 50 and 1500";
         }
 
         // Preview sizing mode validation
@@ -198,15 +198,15 @@ public class PluginConfiguration : BasePluginConfiguration
 
     private string? ValidatePreviewOffsetX()
     {
-        if (PreviewOffsetX < -500 || PreviewOffsetX > 500)
-            return "Preview Offset X must be between -500 and 500 pixels";
+        if (PreviewOffsetX < -2000 || PreviewOffsetX > 2000)
+            return "Preview Offset X must be between -2000 and 2000 pixels";
         return null;
     }
 
     private string? ValidatePreviewOffsetY()
     {
-        if (PreviewOffsetY < -500 || PreviewOffsetY > 500)
-            return "Preview Offset Y must be between -500 and 500 pixels";
+        if (PreviewOffsetY < -2000 || PreviewOffsetY > 2000)
+            return "Preview Offset Y must be between -2000 and 2000 pixels";
         return null;
     }
 
@@ -226,22 +226,22 @@ public class PluginConfiguration : BasePluginConfiguration
 
     private string? ValidatePreviewOpacity()
     {
-        if (PreviewOpacity < 0.1 || PreviewOpacity > 1.0)
-            return "Preview Opacity must be between 0.1 and 1.0";
+        if (PreviewOpacity < 0.0 || PreviewOpacity > 1.0)
+            return "Preview Opacity must be between 0.0 and 1.0";
         return null;
     }
 
     private string? ValidatePreviewBorderRadius()
     {
-        if (PreviewBorderRadius < 0 || PreviewBorderRadius > 20)
-            return "Preview Border Radius must be between 0 and 20 pixels";
+        if (PreviewBorderRadius < 0 || PreviewBorderRadius > 50)
+            return "Preview Border Radius must be between 0 and 50 pixels";
         return null;
     }
 
     private string? ValidatePreviewSizePercentage()
     {
-        if (PreviewSizePercentage <= 0 || PreviewSizePercentage > 300)
-            return "Preview Size Percentage must be between 1 and 300";
+        if (PreviewSizePercentage < 50 || PreviewSizePercentage > 1500)
+            return "Preview Size Percentage must be between 50 and 1500";
         return null;
     }
 
