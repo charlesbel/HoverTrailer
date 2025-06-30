@@ -8,6 +8,14 @@
   "imageUrl": "https://raw.githubusercontent.com/Fovty/HoverTrailer/refs/heads/master/logo/logo.png",
   "versions": [
     {
+      "version": "0.0.0.18",
+      "changelog": "Release version 0.0.0.18",
+      "targetAbi": "10.10.0.0",
+      "sourceUrl": "https://github.com/Fovty/HoverTrailer/releases/download/v0.0.0.18/HoverTrailer-0.0.0.18-server.zip",
+      "checksum": "bbc0231ec6d5c4fefcec412ca926e9ff",
+      "timestamp": "2025-06-30T21:05:39Z"
+    },
+    {
       "version": "0.0.0.17",
       "changelog": "Release version 0.0.0.17",
       "targetAbi": "10.10.0.0",
