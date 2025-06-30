@@ -18,7 +18,7 @@
 ## Manifest URL
 
 ```
-https://raw.githubusercontent.com/Fovty/HoverTrailer/refs/heads/master/manifest.json
+https://raw.githubusercontent.com/Fovty/HoverTrailer/master/manifest.json
 ```
 
 ## Features
