@@ -44,9 +44,9 @@ jobs:
 
     - name: Create Release Package
       run: |
-        # Create plugin package with all published files
+        # Create plugin package with only the main DLL
         cd publish
-        zip -r "../HoverTrailer-${VERSION}-server.zip" .
+        zip "../HoverTrailer-${VERSION}-server.zip" Fovty.Plugin.HoverTrailer.dll
         cd ..
 
         # Calculate MD5 checksum and generate timestamp
