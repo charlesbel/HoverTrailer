@@ -79,7 +79,7 @@ jobs:
         checksum = os.environ['CHECKSUM']
         timestamp = os.environ['TIMESTAMP']
 
-        # Read current manifest
+        # Read current manifest (now an array)
         with open('manifest.json', 'r') as f:
             manifest = json.load(f)
 
@@ -93,8 +93,8 @@ jobs:
             "timestamp": timestamp
         }
 
-        # Insert new entry at the beginning of versions array
-        manifest['versions'].insert(0, new_entry)
+        # Insert new entry at the beginning of versions array (manifest is now an array)
+        manifest[0]['versions'].insert(0, new_entry)
 
         # Write back to manifest
         with open('manifest.json', 'w') as f:
