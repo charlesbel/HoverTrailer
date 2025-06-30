@@ -65,6 +65,7 @@ clean_build() {
 build_plugin() {
     echo -e "${YELLOW}Building plugin...${NC}"
     dotnet publish "$PROJECT_FILE" -c "$BUILD_CONFIG" -f "$TARGET_FRAMEWORK" \
+        --property:TreatWarningsAsErrors=false \
         /property:GenerateFullPaths=true /consoleloggerparameters:NoSummary
     if [ $? -ne 0 ]; then echo -e "${RED}❌ Build failed${NC}"; exit 1; fi
     echo -e "${GREEN}✅ Build completed${NC}"

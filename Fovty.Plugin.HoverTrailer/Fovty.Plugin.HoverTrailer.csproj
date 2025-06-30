@@ -7,11 +7,32 @@
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <Nullable>enable</Nullable>
+
+    <!-- Assembly Information -->
+    <Title>HoverTrailer Plugin for Jellyfin</Title>
+    <Description>Netflix-style hover trailer previews for movies in Jellyfin</Description>
+    <Authors>Fovty</Authors>
+    <Company>HoverTrailer Plugin</Company>
+    <Copyright>Copyright © 2024 HoverTrailer Contributors</Copyright>
+
+    <!-- Code Analysis -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AnalysisMode>All</AnalysisMode>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Jellyfin.Controller" Version="10.10.*-*" />
     <PackageReference Include="Jellyfin.Model" Version="10.10.*-*" />
+    <PackageReference Include="StyleCop.Analyzers" Version="1.1.118">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="SerilogAnalyzer" Version="0.15.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>

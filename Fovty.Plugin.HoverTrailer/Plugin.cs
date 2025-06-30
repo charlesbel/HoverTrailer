@@ -39,7 +39,7 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
 
         try
         {
-            LoggingHelper.LogInformation(logger, "Fovty HoverTrailer plugin is initializing...");
+            LoggingHelper.LogInformation(logger, "HoverTrailer plugin is initializing...");
 
             // Validate configuration on startup
             ValidateConfiguration(logger);
@@ -50,7 +50,7 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
                 InitializeClientScriptInjection(applicationPaths, configurationManager, logger);
             }
 
-            LoggingHelper.LogInformation(logger, "Fovty HoverTrailer plugin initialization completed successfully.");
+            LoggingHelper.LogInformation(logger, "HoverTrailer plugin initialization completed successfully.");
         }
         catch (ConfigurationException ex)
         {
@@ -196,7 +196,7 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
 
             string indexContents = File.ReadAllText(indexFile);
             string scriptReplace = "<script plugin=\"HoverTrailer\".*?></script>";
-            string scriptElement = string.Format("<script plugin=\"HoverTrailer\" version=\"0.0.0.16\" src=\"{0}/HoverTrailer/ClientScript\" defer></script>", basePath);
+            string scriptElement = string.Format("<script plugin=\"HoverTrailer\" version=\"{1}\" src=\"{0}/HoverTrailer/ClientScript\" defer></script>", basePath, GetType().Assembly.GetName().Version?.ToString() ?? "Unknown");
 
             if (indexContents.Contains(scriptElement))
             {
@@ -241,7 +241,7 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     }
 
     /// <inheritdoc />
-    public override string Name => "Fovty HoverTrailer";
+    public override string Name => "HoverTrailer";
 
     /// <inheritdoc />
     public override Guid Id => Guid.Parse("12a5d8c3-4b9e-4f2a-a1c6-8d7e9f0a1b2c");

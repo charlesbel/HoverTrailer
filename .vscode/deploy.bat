@@ -36,7 +36,7 @@ goto :eof
 
 :build_plugin
 echo Building plugin...
-dotnet publish "%PROJECT_FILE%" -c "%BUILD_CONFIG%" -f "%TARGET_FRAMEWORK%" /property:GenerateFullPaths=true /consoleloggerparameters:NoSummary
+dotnet publish "%PROJECT_FILE%" -c "%BUILD_CONFIG%" -f "%TARGET_FRAMEWORK%" --property:TreatWarningsAsErrors=false /property:GenerateFullPaths=true /consoleloggerparameters:NoSummary
 if errorlevel 1 ( echo ❌ Build failed & pause & exit /b 1 )
 echo ✅ Build completed
 goto :eof

@@ -41,7 +41,7 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <summary>
     /// Gets or sets the preview sizing mode (Manual or FitContent).
     /// </summary>
-    public string PreviewSizingMode { get; set; } = "Manual";
+    public string PreviewSizingMode { get; set; } = "FitContent";
 
     /// <summary>
     /// Gets or sets the preview width in pixels (Manual mode).
@@ -56,27 +56,27 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <summary>
     /// Gets or sets the preview size percentage for FitContent mode scaling.
     /// </summary>
-    public int PreviewSizePercentage { get; set; } = 100;
+    public int PreviewSizePercentage { get; set; } = 200;
 
     /// <summary>
     /// Gets or sets the preview opacity (0.0 - 1.0).
     /// </summary>
-    public double PreviewOpacity { get; set; } = 0.9;
+    public double PreviewOpacity { get; set; } = 1.0;
 
     /// <summary>
     /// Gets or sets the preview border radius in pixels.
     /// </summary>
-    public int PreviewBorderRadius { get; set; } = 8;
+    public int PreviewBorderRadius { get; set; } = 10;
 
     /// <summary>
     /// Gets or sets whether to enable audio for trailer previews.
     /// </summary>
-    public bool EnablePreviewAudio { get; set; } = false;
+    public bool EnablePreviewAudio { get; set; } = true;
 
     /// <summary>
     /// Gets or sets a value indicating whether to enable debug logging.
     /// </summary>
-    public bool EnableDebugLogging { get; set; } = false;
+    public bool EnableDebugLogging { get; set; } = true;
 
 
     /// <summary>
@@ -150,9 +150,10 @@ public class PluginConfiguration : BasePluginConfiguration
 
         // Preview sizing mode validation
         if (!string.Equals(PreviewSizingMode, "Manual", StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(PreviewSizingMode, "Percentage", StringComparison.OrdinalIgnoreCase) &&
             !string.Equals(PreviewSizingMode, "FitContent", StringComparison.OrdinalIgnoreCase))
         {
-            yield return "Preview Sizing Mode must be 'Manual' or 'FitContent'";
+            yield return "Preview Sizing Mode must be 'Manual', 'Percentage', or 'FitContent'";
         }
     }
 

@@ -1,0 +1,51 @@
+name: Release
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Extract version from tag
+      id: get_version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+    - name: Update version in project files
+      run: |
+        sed -i "s/<Version>.*<\/Version>/<Version>${{ steps.get_version.outputs.VERSION }}<\/Version>/g" Fovty.Plugin.HoverTrailer/Fovty.Plugin.HoverTrailer.csproj
+        sed -i "s/<AssemblyVersion>.*<\/AssemblyVersion>/<AssemblyVersion>${{ steps.get_version.outputs.VERSION }}<\/AssemblyVersion>/g" Fovty.Plugin.HoverTrailer/Fovty.Plugin.HoverTrailer.csproj
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --no-restore --configuration Release --property:TreatWarningsAsErrors=false
+
+    - name: Publish
+      run: dotnet publish Fovty.Plugin.HoverTrailer/Fovty.Plugin.HoverTrailer.csproj --no-build --configuration Release --output ./publish
+
+    - name: Create plugin package
+      run: |
+        cd publish
+        zip -r ../HoverTrailer-${{ steps.get_version.outputs.VERSION }}.zip .
+        cd ..
+
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./HoverTrailer-${{ steps.get_version.outputs.VERSION }}.zip
+        asset_name: HoverTrailer-${{ steps.get_version.outputs.VERSION }}.zip
+        asset_content_type: application/zip

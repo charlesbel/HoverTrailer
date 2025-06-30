@@ -1,8 +1,28 @@
+# Build outputs
 bin/
 obj/
+artifacts/
+
+# IDEs
 .vs/
+.vscode/settings.json
+.vscode/launch.json
+.vscode/tasks.json
 .idea/
-artifacts
-base-plan.md
-# VS Code
+
+# Sensitive files
+.env
+.env.*
+!.env.template
 .vscode/.env
+.vscode/.env.*
+!.vscode/.env.template
+
+# Temporary files
+base-plan.md
+*.tmp
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
