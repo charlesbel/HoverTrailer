@@ -1,15 +1,21 @@
 name: Release
 
 on:
-  release:
-    types: [created]
+  push:
+    tags:
+      - 'v*'
 
 jobs:
-  build-and-publish:
+  build-and-release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
@@ -17,13 +23,15 @@ jobs:
         dotnet-version: '8.0.x'
 
     - name: Extract version from tag
-      id: get_version
-      run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-
-    - name: Update version in project files
       run: |
-        sed -i "s/<Version>.*<\/Version>/<Version>${{ steps.get_version.outputs.VERSION }}<\/Version>/g" Fovty.Plugin.HoverTrailer/Fovty.Plugin.HoverTrailer.csproj
-        sed -i "s/<AssemblyVersion>.*<\/AssemblyVersion>/<AssemblyVersion>${{ steps.get_version.outputs.VERSION }}<\/AssemblyVersion>/g" Fovty.Plugin.HoverTrailer/Fovty.Plugin.HoverTrailer.csproj
+        VERSION=${GITHUB_REF#refs/tags/v}
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+    - name: Update version in Directory.Build.props
+      run: |
+        sed -i "s/<Version>.*<\/Version>/<Version>${VERSION}<\/Version>/g" Directory.Build.props
+        sed -i "s/<AssemblyVersion>.*<\/AssemblyVersion>/<AssemblyVersion>${VERSION}<\/AssemblyVersion>/g" Directory.Build.props
+        sed -i "s/<FileVersion>.*<\/FileVersion>/<FileVersion>${VERSION}<\/FileVersion>/g" Directory.Build.props
 
     - name: Restore dependencies
       run: dotnet restore
@@ -34,18 +42,111 @@ jobs:
     - name: Publish
       run: dotnet publish Fovty.Plugin.HoverTrailer/Fovty.Plugin.HoverTrailer.csproj --no-build --configuration Release --output ./publish
 
-    - name: Create plugin package
+    - name: Create Release Package
       run: |
+        # Create plugin package with proper naming convention
         cd publish
-        zip -r ../HoverTrailer-${{ steps.get_version.outputs.VERSION }}.zip .
+        zip -r "../HoverTrailer-${VERSION}-server.zip" .
         cd ..
+
+        # Calculate MD5 checksum and generate timestamp
+        echo "CHECKSUM=$(md5sum HoverTrailer-${VERSION}-server.zip | cut -d' ' -f1)" >> $GITHUB_ENV
+        echo "TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_ENV
+
+    - name: Extract Changelog Entry
+      run: |
+        # Extract changelog entry for current version if CHANGELOG.md exists
+        if [ -f "CHANGELOG.md" ]; then
+          changelog_entry=$(awk "/^## \[${VERSION}\]/{flag=1; next} /^## \[/{flag=0} flag" CHANGELOG.md | sed '/^$/d' | head -5 | tr '\n' ' ' | sed 's/["\\]/\\&/g')
+        else
+          changelog_entry=""
+        fi
+
+        if [ -z "$changelog_entry" ]; then
+          changelog_entry="Release version ${VERSION}"
+        fi
+        echo "CHANGELOG_ENTRY=$changelog_entry" >> $GITHUB_ENV
+
+    - name: Update Manifest
+      run: |
+        # Create new version entry for manifest
+        python3 << 'EOF'
+        import json
+        import os
+
+        version = os.environ['VERSION']
+        changelog = os.environ['CHANGELOG_ENTRY']
+        checksum = os.environ['CHECKSUM']
+        timestamp = os.environ['TIMESTAMP']
+
+        # Read current manifest
+        with open('manifest.json', 'r') as f:
+            manifest = json.load(f)
+
+        # Create new version entry
+        new_entry = {
+            "version": version,
+            "changelog": changelog,
+            "targetAbi": "10.10.0.0",
+            "sourceUrl": f"https://github.com/fovty/hovertrailer/releases/download/v{version}/HoverTrailer-{version}-server.zip",
+            "checksum": checksum,
+            "timestamp": timestamp
+        }
+
+        # Insert new entry at the beginning of versions array
+        manifest['versions'].insert(0, new_entry)
+
+        # Write back to manifest
+        with open('manifest.json', 'w') as f:
+            json.dump(manifest, f, indent=2)
+
+        print(f"Manifest updated successfully with version {version}")
+        EOF
+
+    - name: Commit Updated Manifest
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add manifest.json Directory.Build.props
+        if git diff --cached --quiet; then
+          echo "No changes to commit"
+        else
+          git commit -m "Update manifest and version for release v${VERSION}"
+          git push
+        fi
+
+    - name: Create GitHub Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ env.VERSION }}
+        release_name: HoverTrailer v${{ env.VERSION }}
+        body: |
+          ## Changes in v${{ env.VERSION }}
+
+          ${{ env.CHANGELOG_ENTRY }}
+
+          ## Installation
+
+          1. Download the `HoverTrailer-${{ env.VERSION }}-server.zip` file
+          2. Extract to your Jellyfin plugins directory
+          3. Restart Jellyfin server
+          4. Enable the plugin in Jellyfin settings
+
+          ## Checksums
+
+          - **MD5**: `${{ env.CHECKSUM }}`
+        draft: false
+        prerelease: false
 
     - name: Upload Release Asset
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./HoverTrailer-${{ steps.get_version.outputs.VERSION }}.zip
-        asset_name: HoverTrailer-${{ steps.get_version.outputs.VERSION }}.zip
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./HoverTrailer-${{ env.VERSION }}-server.zip
+        asset_name: HoverTrailer-${{ env.VERSION }}-server.zip
         asset_content_type: application/zip

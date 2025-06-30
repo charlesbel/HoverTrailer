@@ -1,10 +1,25 @@
-# HoverTrailer Plugin for Jellyfin
+# HoverTrailer
 
 <div align="center">
-  <img src="logo/logo.png" alt="HoverTrailer Logo" width="200"/>
+    <p>
+        <img alt="HoverTrailer Logo" src="logo/logo.png" width="450"/>
+    </p>
+    <p>
+        A modern Netflix-style hover trailer preview plugin for Jellyfin that displays movie trailers on hover.
+    </p>
+
+[![Build](https://github.com/fovty/hovertrailer/actions/workflows/build.yml/badge.svg)](https://github.com/fovty/hovertrailer/actions/workflows/build.yml)
+[![CodeQL](https://github.com/fovty/hovertrailer/actions/workflows/codeql.yml/badge.svg)](https://github.com/fovty/hovertrailer/actions/workflows/codeql.yml)
+<a href="https://github.com/fovty/hovertrailer/releases">
+<img alt="Total GitHub Downloads" src="https://img.shields.io/github/downloads/fovty/hovertrailer/total?label=github%20downloads"/>
+</a>
 </div>
 
-A modern Netflix-style hover trailer preview plugin for Jellyfin that displays movie trailers on hover.
+## Manifest URL
+
+```
+https://raw.githubusercontent.com/fovty/hovertrailer/main/manifest.json
+```
 
 ## Features
 
@@ -103,7 +118,7 @@ Access plugin settings through:
 ### Building from Source
 ```bash
 # Clone repository
-git clone https://github.com/your-username/hovertrailer.git
+git clone https://github.com/fovty/hovertrailer.git
 cd hovertrailer
 
 # Build plugin (warnings suppressed due to StyleCop/Code Analysis)
