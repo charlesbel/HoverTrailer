@@ -39,7 +39,7 @@ public class PluginConfiguration : BasePluginConfiguration
     public int PreviewOffsetY { get; set; } = 0;
 
     /// <summary>
-    /// Gets or sets the preview sizing mode (Manual or Percentage).
+    /// Gets or sets the preview sizing mode (Manual or FitContent).
     /// </summary>
     public string PreviewSizingMode { get; set; } = "Manual";
 
@@ -54,7 +54,7 @@ public class PluginConfiguration : BasePluginConfiguration
     public int PreviewHeight { get; set; } = 200;
 
     /// <summary>
-    /// Gets or sets the preview size percentage (Percentage mode).
+    /// Gets or sets the preview size percentage for FitContent mode scaling.
     /// </summary>
     public int PreviewSizePercentage { get; set; } = 100;
 
@@ -150,10 +150,9 @@ public class PluginConfiguration : BasePluginConfiguration
 
         // Preview sizing mode validation
         if (!string.Equals(PreviewSizingMode, "Manual", StringComparison.OrdinalIgnoreCase) &&
-            !string.Equals(PreviewSizingMode, "Percentage", StringComparison.OrdinalIgnoreCase) &&
             !string.Equals(PreviewSizingMode, "FitContent", StringComparison.OrdinalIgnoreCase))
         {
-            yield return "Preview Sizing Mode must be 'Manual', 'Percentage', or 'FitContent'";
+            yield return "Preview Sizing Mode must be 'Manual' or 'FitContent'";
         }
     }
 

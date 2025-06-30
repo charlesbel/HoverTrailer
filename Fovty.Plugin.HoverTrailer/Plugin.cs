@@ -196,7 +196,7 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
 
             string indexContents = File.ReadAllText(indexFile);
             string scriptReplace = "<script plugin=\"HoverTrailer\".*?></script>";
-            string scriptElement = string.Format("<script plugin=\"HoverTrailer\" version=\"0.0.0.10\" src=\"{0}/HoverTrailer/ClientScript\" defer></script>", basePath);
+            string scriptElement = string.Format("<script plugin=\"HoverTrailer\" version=\"0.0.0.13\" src=\"{0}/HoverTrailer/ClientScript\" defer></script>", basePath);
 
             if (indexContents.Contains(scriptElement))
             {

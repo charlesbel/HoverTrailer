@@ -1,7 +1,7 @@
 {
     // Plugin-specific settings for HoverTrailer
     "pluginName": "Fovty.Plugin.HoverTrailer",
-    "pluginVersion": "0.0.0.10",
+    "pluginVersion": "0.0.0.13",
 
     // Remote Jellyfin server configuration
 

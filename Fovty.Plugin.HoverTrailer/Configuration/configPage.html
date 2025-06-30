@@ -72,7 +72,6 @@
                             <label class="inputLabel inputLabelUnfocused" for="PreviewSizingMode">Sizing Mode:</label>
                             <select id="PreviewSizingMode" name="PreviewSizingMode" is="emby-select" class="emby-select">
                                 <option value="Manual">Manual (Set Width & Height)</option>
-                                <option value="Percentage">Percentage of Card</option>
                                 <option value="FitContent">Fit to Video Content</option>
                             </select>
                             <div class="fieldDescription">Choose how to size the preview window</div>
@@ -90,10 +89,10 @@
                             <div class="fieldDescription">Height of the preview window (150-600 pixels)</div>
                         </div>
 
-                        <div class="inputContainer" id="percentageSizeContainer" style="display: none;">
-                            <label class="inputLabel inputLabelUnfocused" for="PreviewSizePercentage">Preview Size Percentage (%):</label>
+                        <div class="inputContainer" id="fitContentSizeContainer" style="display: none;">
+                            <label class="inputLabel inputLabelUnfocused" for="PreviewSizePercentage">Content Scale Percentage (%):</label>
                             <input id="PreviewSizePercentage" name="PreviewSizePercentage" type="number" min="50" max="300" step="10" is="emby-input" class="emby-input" />
-                            <div class="fieldDescription">Scale the preview as a percentage of base size (50-300%)</div>
+                            <div class="fieldDescription">Scale the content-fitted preview size (50-300%)</div>
                         </div>
 
                         <div class="inputContainer">
@@ -214,20 +213,16 @@
                 const sizingMode = document.querySelector('#PreviewSizingMode').value;
                 const manualContainer = document.querySelector('#manualSizeContainer');
                 const manualContainer2 = document.querySelector('#manualSizeContainer2');
-                const percentageContainer = document.querySelector('#percentageSizeContainer');
+                const fitContentContainer = document.querySelector('#fitContentSizeContainer');
 
                 if (sizingMode === 'Manual') {
                     manualContainer.style.display = 'block';
                     manualContainer2.style.display = 'block';
-                    percentageContainer.style.display = 'none';
-                } else if (sizingMode === 'Percentage') {
-                    manualContainer.style.display = 'none';
-                    manualContainer2.style.display = 'none';
-                    percentageContainer.style.display = 'block';
+                    fitContentContainer.style.display = 'none';
                 } else if (sizingMode === 'FitContent') {
                     manualContainer.style.display = 'none';
                     manualContainer2.style.display = 'none';
-                    percentageContainer.style.display = 'none';
+                    fitContentContainer.style.display = 'block';
                 }
             }
 

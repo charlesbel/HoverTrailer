@@ -402,11 +402,7 @@ public class HoverTrailerController : ControllerBase
 
         // Calculate container size based on sizing mode
         let containerWidth, containerHeight;
-        if (PREVIEW_SIZING_MODE === 'Percentage') {{
-            // For percentage mode, calculate size based on card dimensions
-            containerWidth = Math.round(cardRect.width * (PREVIEW_SIZE_PERCENTAGE / 100));
-            containerHeight = Math.round(cardRect.height * (PREVIEW_SIZE_PERCENTAGE / 100));
-        }} else if (PREVIEW_SIZING_MODE === 'FitContent') {{
+        if (PREVIEW_SIZING_MODE === 'FitContent') {{
             // For fit content mode, start with card dimensions, will be adjusted when video loads
             containerWidth = cardRect.width;
             containerHeight = cardRect.height;
@@ -510,9 +506,14 @@ public class HoverTrailerController : ControllerBase
 
                             log(`Calculated fit dimensions: ${{newWidth}}x${{newHeight}}`);
 
-                            container.style.width = newWidth + 'px';
-                            container.style.height = newHeight + 'px';
-                            log('Adjusted container for fit content mode:', newWidth + 'x' + newHeight);
+                            // Apply percentage scaling to the fit dimensions
+                            const scaledWidth = Math.round(newWidth * (PREVIEW_SIZE_PERCENTAGE / 100));
+                            const scaledHeight = Math.round(newHeight * (PREVIEW_SIZE_PERCENTAGE / 100));
+
+                            container.style.width = scaledWidth + 'px';
+                            container.style.height = scaledHeight + 'px';
+                            log(`Applied ${{PREVIEW_SIZE_PERCENTAGE}}% scaling: ${{scaledWidth}}x${{scaledHeight}}`);
+                            log('Adjusted container for fit content mode:', scaledWidth + 'x' + scaledHeight);
                         }} catch (error) {{
                             console.error('Error in FitContent loadedmetadata handler:', error);
                             log(`FitContent error: ${{error.message}}`);
@@ -532,12 +533,29 @@ public class HoverTrailerController : ControllerBase
                         const cardCenterX = cardRect.left + cardRect.width / 2;
                         const cardCenterY = cardRect.top + cardRect.height / 2;
 
-                        // Recalculate container size if in percentage mode
-                        if (PREVIEW_SIZING_MODE === 'Percentage') {{
-                            const containerWidth = Math.round(cardRect.width * (PREVIEW_SIZE_PERCENTAGE / 100));
-                            const containerHeight = Math.round(cardRect.height * (PREVIEW_SIZE_PERCENTAGE / 100));
-                            currentPreview.style.width = `${{containerWidth}}px`;
-                            currentPreview.style.height = `${{containerHeight}}px`;
+                        // Recalculate container size if in FitContent mode
+                        if (PREVIEW_SIZING_MODE === 'FitContent') {{
+                            const video = currentPreview.querySelector('video');
+                            if (video && video.videoWidth && video.videoHeight) {{
+                                const videoAspectRatio = video.videoWidth / video.videoHeight;
+                                const cardAspectRatio = cardRect.width / cardRect.height;
+
+                                let newWidth, newHeight;
+                                if (videoAspectRatio > cardAspectRatio) {{
+                                    newWidth = cardRect.width;
+                                    newHeight = Math.round(cardRect.width / videoAspectRatio);
+                                }} else {{
+                                    newHeight = cardRect.height;
+                                    newWidth = Math.round(cardRect.height * videoAspectRatio);
+                                }}
+
+                                // Apply percentage scaling
+                                const scaledWidth = Math.round(newWidth * (PREVIEW_SIZE_PERCENTAGE / 100));
+                                const scaledHeight = Math.round(newHeight * (PREVIEW_SIZE_PERCENTAGE / 100));
+
+                                currentPreview.style.width = `${{scaledWidth}}px`;
+                                currentPreview.style.height = `${{scaledHeight}}px`;
+                            }}
                         }}
 
                         currentPreview.style.top = `calc(${{cardCenterY}}px + ${{PREVIEW_OFFSET_Y}}px)`;
