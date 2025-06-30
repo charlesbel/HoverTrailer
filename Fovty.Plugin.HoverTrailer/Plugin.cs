@@ -244,7 +244,7 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     public override string Name => "HoverTrailer";
 
     /// <inheritdoc />
-    public override Guid Id => Guid.Parse("F0VTY101-H0VR-TRL1-JFIN-123456789ABC");
+    public override Guid Id => Guid.Parse("82c71cde-a52b-44f1-a18e-d93eb6a35ed0");
 
     /// <inheritdoc />
     public override string Description => "Provides hover trailer preview functionality for movies in your Jellyfin library.";
