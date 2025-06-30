@@ -377,7 +377,9 @@ public class HoverTrailerController : ControllerBase
 
     let hoverTimeout;
     let currentPreview;
+    let currentCardElement;
     let isPlaying = false;
+    let resizeHandler;
 
     function log(message, ...args) {{
         if (DEBUG_LOGGING) {{
@@ -385,18 +387,24 @@ public class HoverTrailerController : ControllerBase
         }}
     }}
 
-    function createVideoPreview(trailerPath) {{
+    function createVideoPreview(trailerPath, cardElement) {{
         const video = document.createElement('video');
+
+        // Get card position relative to viewport
+        const cardRect = cardElement.getBoundingClientRect();
+        const cardCenterX = cardRect.left + cardRect.width / 2;
+        const cardCenterY = cardRect.top + cardRect.height / 2;
+
         video.style.cssText = `
-            position: absolute;
-            top: calc(50% + ${{PREVIEW_OFFSET_Y}}px);
-            left: calc(50% + ${{PREVIEW_OFFSET_X}}px);
+            position: fixed;
+            top: calc(${{cardCenterY}}px + ${{PREVIEW_OFFSET_Y}}px);
+            left: calc(${{cardCenterX}}px + ${{PREVIEW_OFFSET_X}}px);
             transform: translate(-50%, -50%);
-            max-width: ${{PREVIEW_WIDTH}}px;
-            max-height: ${{PREVIEW_HEIGHT}}px;
+            width: ${{PREVIEW_WIDTH}}px;
+            height: ${{PREVIEW_HEIGHT}}px;
             border-radius: ${{PREVIEW_BORDER_RADIUS}}px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-            z-index: 1000;
+            z-index: 10000;
             pointer-events: none;
             opacity: 0;
             transition: opacity 0.3s ease;
@@ -424,15 +432,30 @@ public class HoverTrailerController : ControllerBase
                 return response.json();
             }})
             .then(trailerInfo => {{
-                const video = createVideoPreview(`/Videos/${{trailerInfo.Id}}/stream`);
+                const video = createVideoPreview(`/Videos/${{trailerInfo.Id}}/stream`, element);
 
                 video.addEventListener('loadeddata', () => {{
                     video.style.opacity = PREVIEW_OPACITY;
                     video.play().catch(e => log('Error playing video:', e));
                 }});
 
-                element.appendChild(video);
+                // Append to body to avoid clipping by parent containers
+                document.body.appendChild(video);
                 currentPreview = video;
+                currentCardElement = element;
+
+                // Add resize handler to reposition video on window resize
+                resizeHandler = () => {{
+                    if (currentPreview && currentCardElement) {{
+                        const cardRect = currentCardElement.getBoundingClientRect();
+                        const cardCenterX = cardRect.left + cardRect.width / 2;
+                        const cardCenterY = cardRect.top + cardRect.height / 2;
+
+                        currentPreview.style.top = `calc(${{cardCenterY}}px + ${{PREVIEW_OFFSET_Y}}px)`;
+                        currentPreview.style.left = `calc(${{cardCenterX}}px + ${{PREVIEW_OFFSET_X}}px)`;
+                    }}
+                }};
+                window.addEventListener('resize', resizeHandler);
 
                 log('Preview created for:', trailerInfo.Name);
             }})
@@ -449,6 +472,13 @@ public class HoverTrailerController : ControllerBase
                     currentPreview.parentNode.removeChild(currentPreview);
                 }}
                 currentPreview = null;
+                currentCardElement = null;
+
+                // Remove resize handler
+                if (resizeHandler) {{
+                    window.removeEventListener('resize', resizeHandler);
+                    resizeHandler = null;
+                }}
             }}, 300);
         }}
     }}
