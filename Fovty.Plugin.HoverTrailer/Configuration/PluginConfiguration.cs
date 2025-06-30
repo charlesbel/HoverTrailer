@@ -39,14 +39,24 @@ public class PluginConfiguration : BasePluginConfiguration
     public int PreviewOffsetY { get; set; } = 0;
 
     /// <summary>
-    /// Gets or sets the preview width in pixels.
+    /// Gets or sets the preview sizing mode (Manual or Percentage).
+    /// </summary>
+    public string PreviewSizingMode { get; set; } = "Manual";
+
+    /// <summary>
+    /// Gets or sets the preview width in pixels (Manual mode).
     /// </summary>
     public int PreviewWidth { get; set; } = 300;
 
     /// <summary>
-    /// Gets or sets the preview height in pixels.
+    /// Gets or sets the preview height in pixels (Manual mode).
     /// </summary>
     public int PreviewHeight { get; set; } = 200;
+
+    /// <summary>
+    /// Gets or sets the preview size percentage (Percentage mode).
+    /// </summary>
+    public int PreviewSizePercentage { get; set; } = 100;
 
     /// <summary>
     /// Gets or sets the preview opacity (0.0 - 1.0).
@@ -57,6 +67,11 @@ public class PluginConfiguration : BasePluginConfiguration
     /// Gets or sets the preview border radius in pixels.
     /// </summary>
     public int PreviewBorderRadius { get; set; } = 8;
+
+    /// <summary>
+    /// Gets or sets whether to enable audio for trailer previews.
+    /// </summary>
+    public bool EnablePreviewAudio { get; set; } = false;
 
     /// <summary>
     /// Gets or sets a value indicating whether to enable debug logging.
@@ -126,6 +141,19 @@ public class PluginConfiguration : BasePluginConfiguration
         {
             yield return "Preview Border Radius must be between 0 and 20 pixels";
         }
+
+        // Preview size percentage validation
+        if (PreviewSizePercentage <= 0 || PreviewSizePercentage > 300)
+        {
+            yield return "Preview Size Percentage must be between 1 and 300";
+        }
+
+        // Preview sizing mode validation
+        if (!string.Equals(PreviewSizingMode, "Manual", StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(PreviewSizingMode, "Percentage", StringComparison.OrdinalIgnoreCase))
+        {
+            yield return "Preview Sizing Mode must be either 'Manual' or 'Percentage'";
+        }
     }
 
     /// <summary>
@@ -153,6 +181,8 @@ public class PluginConfiguration : BasePluginConfiguration
             nameof(PreviewHeight) => ValidatePreviewHeight(),
             nameof(PreviewOpacity) => ValidatePreviewOpacity(),
             nameof(PreviewBorderRadius) => ValidatePreviewBorderRadius(),
+            nameof(PreviewSizePercentage) => ValidatePreviewSizePercentage(),
+            nameof(PreviewSizingMode) => ValidatePreviewSizingMode(),
             _ => null
         };
     }
@@ -205,6 +235,22 @@ public class PluginConfiguration : BasePluginConfiguration
     {
         if (PreviewBorderRadius < 0 || PreviewBorderRadius > 20)
             return "Preview Border Radius must be between 0 and 20 pixels";
+        return null;
+    }
+
+    private string? ValidatePreviewSizePercentage()
+    {
+        if (PreviewSizePercentage <= 0 || PreviewSizePercentage > 300)
+            return "Preview Size Percentage must be between 1 and 300";
+        return null;
+    }
+
+    private string? ValidatePreviewSizingMode()
+    {
+        if (!string.Equals(PreviewSizingMode, "Manual", StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(PreviewSizingMode, "Percentage", StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(PreviewSizingMode, "FitContent", StringComparison.OrdinalIgnoreCase))
+            return "Preview Sizing Mode must be 'Manual', 'Percentage', or 'FitContent'";
         return null;
     }
 }

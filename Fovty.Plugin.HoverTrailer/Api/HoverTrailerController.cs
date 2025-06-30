@@ -374,6 +374,9 @@ public class HoverTrailerController : ControllerBase
     const PREVIEW_HEIGHT = {config.PreviewHeight};
     const PREVIEW_OPACITY = {config.PreviewOpacity.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)};
     const PREVIEW_BORDER_RADIUS = {config.PreviewBorderRadius};
+    const PREVIEW_SIZING_MODE = '{config.PreviewSizingMode}';
+    const PREVIEW_SIZE_PERCENTAGE = {config.PreviewSizePercentage};
+    const ENABLE_PREVIEW_AUDIO = {config.EnablePreviewAudio.ToString().ToLower()};
 
     let hoverTimeout;
     let currentPreview;
@@ -388,6 +391,8 @@ public class HoverTrailerController : ControllerBase
     }}
 
     function createVideoPreview(trailerPath, cardElement) {{
+        // Create container div for the video
+        const container = document.createElement('div');
         const video = document.createElement('video');
 
         // Get card position relative to viewport
@@ -395,14 +400,32 @@ public class HoverTrailerController : ControllerBase
         const cardCenterX = cardRect.left + cardRect.width / 2;
         const cardCenterY = cardRect.top + cardRect.height / 2;
 
-        video.style.cssText = `
+        // Calculate container size based on sizing mode
+        let containerWidth, containerHeight;
+        if (PREVIEW_SIZING_MODE === 'Percentage') {{
+            // For percentage mode, calculate size based on card dimensions
+            containerWidth = Math.round(cardRect.width * (PREVIEW_SIZE_PERCENTAGE / 100));
+            containerHeight = Math.round(cardRect.height * (PREVIEW_SIZE_PERCENTAGE / 100));
+        }} else if (PREVIEW_SIZING_MODE === 'FitContent') {{
+            // For fit content mode, start with card dimensions, will be adjusted when video loads
+            containerWidth = cardRect.width;
+            containerHeight = cardRect.height;
+        }} else {{
+            // Manual mode uses configured width/height
+            containerWidth = PREVIEW_WIDTH;
+            containerHeight = PREVIEW_HEIGHT;
+        }}
+
+        // Style the container
+        container.style.cssText = `
             position: fixed;
             top: calc(${{cardCenterY}}px + ${{PREVIEW_OFFSET_Y}}px);
             left: calc(${{cardCenterX}}px + ${{PREVIEW_OFFSET_X}}px);
             transform: translate(-50%, -50%);
-            width: ${{PREVIEW_WIDTH}}px;
-            height: ${{PREVIEW_HEIGHT}}px;
+            width: ${{containerWidth}}px;
+            height: ${{containerHeight}}px;
             border-radius: ${{PREVIEW_BORDER_RADIUS}}px;
+            overflow: hidden;
             box-shadow: 0 4px 12px rgba(0,0,0,0.5);
             z-index: 10000;
             pointer-events: none;
@@ -410,12 +433,22 @@ public class HoverTrailerController : ControllerBase
             transition: opacity 0.3s ease;
         `;
 
+        // Style the video to fill the container
+        video.style.cssText = `
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        `;
+
         video.src = trailerPath;
-        video.muted = true;
+        video.muted = !ENABLE_PREVIEW_AUDIO;
         video.loop = true;
         video.preload = 'metadata';
 
-        return video;
+        // Append video to container
+        container.appendChild(video);
+
+        return container;
     }}
 
     function showPreview(element, movieId) {{
@@ -432,24 +465,67 @@ public class HoverTrailerController : ControllerBase
                 return response.json();
             }})
             .then(trailerInfo => {{
-                const video = createVideoPreview(`/Videos/${{trailerInfo.Id}}/stream`, element);
+                const container = createVideoPreview(`/Videos/${{trailerInfo.Id}}/stream`, element);
+                const video = container.querySelector('video');
 
                 video.addEventListener('loadeddata', () => {{
-                    video.style.opacity = PREVIEW_OPACITY;
-                    video.play().catch(e => log('Error playing video:', e));
+                    container.style.opacity = PREVIEW_OPACITY;
+                    video.play().catch(e => {{
+                        log('Error playing video:', e.name + ': ' + e.message);
+
+                        // If audio is not allowed, try to play muted
+                        if (e.name === 'NotAllowedError' && !video.muted) {{
+                            log('Audio not allowed, falling back to muted playback');
+                            video.muted = true;
+                            video.play().catch(muteError => {{
+                                log('Even muted playback failed:', muteError.name + ': ' + muteError.message);
+                            }});
+                        }}
+                    }});
                 }});
 
+                // Handle video metadata load for fit content mode
+                if (PREVIEW_SIZING_MODE === 'FitContent') {{
+                    video.addEventListener('loadedmetadata', () => {{
+                        const videoAspectRatio = video.videoWidth / video.videoHeight;
+                        const cardAspectRatio = cardRect.width / cardRect.height;
+
+                        let newWidth, newHeight;
+                        if (videoAspectRatio > cardAspectRatio) {{
+                            // Video is wider than card, fit to width
+                            newWidth = cardRect.width;
+                            newHeight = Math.round(cardRect.width / videoAspectRatio);
+                        }} else {{
+                            // Video is taller than card, fit to height
+                            newHeight = cardRect.height;
+                            newWidth = Math.round(cardRect.height * videoAspectRatio);
+                        }}
+
+                        container.style.width = newWidth + 'px';
+                        container.style.height = newHeight + 'px';
+                        log('Adjusted container for fit content mode:', newWidth + 'x' + newHeight);
+                    }});
+                }}
+
                 // Append to body to avoid clipping by parent containers
-                document.body.appendChild(video);
-                currentPreview = video;
+                document.body.appendChild(container);
+                currentPreview = container;
                 currentCardElement = element;
 
-                // Add resize handler to reposition video on window resize
+                // Add resize handler to reposition container on window resize
                 resizeHandler = () => {{
                     if (currentPreview && currentCardElement) {{
                         const cardRect = currentCardElement.getBoundingClientRect();
                         const cardCenterX = cardRect.left + cardRect.width / 2;
                         const cardCenterY = cardRect.top + cardRect.height / 2;
+
+                        // Recalculate container size if in percentage mode
+                        if (PREVIEW_SIZING_MODE === 'Percentage') {{
+                            const containerWidth = Math.round(cardRect.width * (PREVIEW_SIZE_PERCENTAGE / 100));
+                            const containerHeight = Math.round(cardRect.height * (PREVIEW_SIZE_PERCENTAGE / 100));
+                            currentPreview.style.width = `${{containerWidth}}px`;
+                            currentPreview.style.height = `${{containerHeight}}px`;
+                        }}
 
                         currentPreview.style.top = `calc(${{cardCenterY}}px + ${{PREVIEW_OFFSET_Y}}px)`;
                         currentPreview.style.left = `calc(${{cardCenterX}}px + ${{PREVIEW_OFFSET_X}}px)`;

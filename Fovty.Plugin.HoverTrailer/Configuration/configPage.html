@@ -69,15 +69,31 @@
                         </div>
 
                         <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="PreviewSizingMode">Sizing Mode:</label>
+                            <select id="PreviewSizingMode" name="PreviewSizingMode" is="emby-select" class="emby-select">
+                                <option value="Manual">Manual (Set Width & Height)</option>
+                                <option value="Percentage">Percentage of Card</option>
+                                <option value="FitContent">Fit to Video Content</option>
+                            </select>
+                            <div class="fieldDescription">Choose how to size the preview window</div>
+                        </div>
+
+                        <div class="inputContainer" id="manualSizeContainer">
                             <label class="inputLabel inputLabelUnfocused" for="PreviewWidth">Preview Width (px):</label>
                             <input id="PreviewWidth" name="PreviewWidth" type="number" min="200" max="800" is="emby-input" class="emby-input" />
                             <div class="fieldDescription">Width of the preview window (200-800 pixels)</div>
                         </div>
 
-                        <div class="inputContainer">
+                        <div class="inputContainer" id="manualSizeContainer2">
                             <label class="inputLabel inputLabelUnfocused" for="PreviewHeight">Preview Height (px):</label>
                             <input id="PreviewHeight" name="PreviewHeight" type="number" min="150" max="600" is="emby-input" class="emby-input" />
                             <div class="fieldDescription">Height of the preview window (150-600 pixels)</div>
+                        </div>
+
+                        <div class="inputContainer" id="percentageSizeContainer" style="display: none;">
+                            <label class="inputLabel inputLabelUnfocused" for="PreviewSizePercentage">Preview Size Percentage (%):</label>
+                            <input id="PreviewSizePercentage" name="PreviewSizePercentage" type="number" min="50" max="300" step="10" is="emby-input" class="emby-input" />
+                            <div class="fieldDescription">Scale the preview as a percentage of base size (50-300%)</div>
                         </div>
 
                         <div class="inputContainer">
@@ -91,6 +107,12 @@
                             <input id="PreviewBorderRadius" name="PreviewBorderRadius" type="number" min="0" max="20" is="emby-input" class="emby-input" />
                             <div class="fieldDescription">Rounded corners for the preview (0-20 pixels)</div>
                         </div>
+
+                        <label class="emby-checkbox-label">
+                            <input id="EnablePreviewAudio" name="EnablePreviewAudio" type="checkbox" is="emby-checkbox" />
+                            <span>Enable Preview Audio</span>
+                        </label>
+                        <div class="fieldDescription">Allow sound to play during trailer previews</div>
                     </div>
 
                     <!-- Debug Settings (existing) -->
@@ -130,10 +152,16 @@
                     // Hover Preview Customization
                     document.querySelector('#PreviewOffsetX').value = config.PreviewOffsetX || 0;
                     document.querySelector('#PreviewOffsetY').value = config.PreviewOffsetY || 0;
+                    document.querySelector('#PreviewSizingMode').value = config.PreviewSizingMode || 'Manual';
                     document.querySelector('#PreviewWidth').value = config.PreviewWidth || 300;
                     document.querySelector('#PreviewHeight').value = config.PreviewHeight || 200;
+                    document.querySelector('#PreviewSizePercentage').value = config.PreviewSizePercentage || 100;
                     document.querySelector('#PreviewOpacity').value = config.PreviewOpacity || 0.9;
                     document.querySelector('#PreviewBorderRadius').value = config.PreviewBorderRadius || 8;
+                    document.querySelector('#EnablePreviewAudio').checked = config.EnablePreviewAudio || false;
+
+                    // Update sizing mode visibility
+                    updateSizingModeVisibility();
 
                     // Debug Settings
                     document.querySelector('#EnableDebugLogging').checked = config.EnableDebugLogging || false;
@@ -157,10 +185,13 @@
                     // Hover Preview Customization
                     config.PreviewOffsetX = parseInt(document.querySelector('#PreviewOffsetX').value) || 0;
                     config.PreviewOffsetY = parseInt(document.querySelector('#PreviewOffsetY').value) || 0;
+                    config.PreviewSizingMode = document.querySelector('#PreviewSizingMode').value || 'Manual';
                     config.PreviewWidth = parseInt(document.querySelector('#PreviewWidth').value) || 300;
                     config.PreviewHeight = parseInt(document.querySelector('#PreviewHeight').value) || 200;
+                    config.PreviewSizePercentage = parseInt(document.querySelector('#PreviewSizePercentage').value) || 100;
                     config.PreviewOpacity = parseFloat(document.querySelector('#PreviewOpacity').value) || 0.9;
                     config.PreviewBorderRadius = parseInt(document.querySelector('#PreviewBorderRadius').value) || 8;
+                    config.EnablePreviewAudio = document.querySelector('#EnablePreviewAudio').checked;
 
                     // Debug Settings
                     config.EnableDebugLogging = document.querySelector('#EnableDebugLogging').checked;
@@ -179,6 +210,27 @@
                 });
             }
 
+            function updateSizingModeVisibility() {
+                const sizingMode = document.querySelector('#PreviewSizingMode').value;
+                const manualContainer = document.querySelector('#manualSizeContainer');
+                const manualContainer2 = document.querySelector('#manualSizeContainer2');
+                const percentageContainer = document.querySelector('#percentageSizeContainer');
+
+                if (sizingMode === 'Manual') {
+                    manualContainer.style.display = 'block';
+                    manualContainer2.style.display = 'block';
+                    percentageContainer.style.display = 'none';
+                } else if (sizingMode === 'Percentage') {
+                    manualContainer.style.display = 'none';
+                    manualContainer2.style.display = 'none';
+                    percentageContainer.style.display = 'block';
+                } else if (sizingMode === 'FitContent') {
+                    manualContainer.style.display = 'none';
+                    manualContainer2.style.display = 'none';
+                    percentageContainer.style.display = 'none';
+                }
+            }
+
             document.querySelector("#HoverTrailerConfigPage").addEventListener("pageshow", () => {
                 loadConfiguration();
             });
@@ -188,6 +240,9 @@
                 saveConfiguration();
                 return false;
             });
+
+            // Add event listener for sizing mode dropdown
+            document.querySelector('#PreviewSizingMode').addEventListener('change', updateSizingModeVisibility);
         </script>
     </div>
 </body>
