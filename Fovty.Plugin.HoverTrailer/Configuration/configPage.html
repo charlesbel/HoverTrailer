@@ -141,16 +141,27 @@
                                 Customize the appearance, positioning, and sizing of hover previews.
                             </div>
 
-                            <div class="inputContainer">
-                                <label class="inputLabel inputLabelUnfocused" for="PreviewOffsetX">Horizontal Offset (px)</label>
-                                <input id="PreviewOffsetX" name="PreviewOffsetX" type="number" min="-2000" max="2000" is="emby-input" />
-                                <div class="fieldDescription">Horizontal offset from default position (-2000 to +2000 pixels)</div>
+                            <div class="selectContainer">
+                                <label class="selectLabel" for="PreviewPositioningMode">Positioning Mode</label>
+                                <select id="PreviewPositioningMode" name="PreviewPositioningMode" is="emby-select" class="emby-select-withcolor emby-select">
+                                    <option value="Center">Center (Automatically Centered)</option>
+                                    <option value="Custom">Custom (Manual Positioning)</option>
+                                </select>
+                                <div class="fieldDescription">Choose how to position the preview window</div>
                             </div>
 
-                            <div class="inputContainer">
-                                <label class="inputLabel inputLabelUnfocused" for="PreviewOffsetY">Vertical Offset (px)</label>
-                                <input id="PreviewOffsetY" name="PreviewOffsetY" type="number" min="-2000" max="2000" is="emby-input" />
-                                <div class="fieldDescription">Vertical offset from default position (-2000 to +2000 pixels)</div>
+                            <div id="customPositionContainer">
+                                <div class="inputContainer">
+                                    <label class="inputLabel inputLabelUnfocused" for="PreviewOffsetX">Horizontal Offset (px)</label>
+                                    <input id="PreviewOffsetX" name="PreviewOffsetX" type="number" min="-2000" max="2000" is="emby-input" />
+                                    <div class="fieldDescription">Horizontal offset from default position (-2000 to +2000 pixels)</div>
+                                </div>
+
+                                <div class="inputContainer">
+                                    <label class="inputLabel inputLabelUnfocused" for="PreviewOffsetY">Vertical Offset (px)</label>
+                                    <input id="PreviewOffsetY" name="PreviewOffsetY" type="number" min="-2000" max="2000" is="emby-input" />
+                                    <div class="fieldDescription">Vertical offset from default position (-2000 to +2000 pixels)</div>
+                                </div>
                             </div>
 
                             <div class="selectContainer">
@@ -199,6 +210,14 @@
                                 <span class="checkboxOutline"><span class="material-icons checkboxIcon checkboxIcon-checked check" aria-hidden="true"></span><span class="material-icons checkboxIcon checkboxIcon-unchecked " aria-hidden="true"></span></span></label>
                                 <div class="fieldDescription">Allow sound to play during trailer previews</div>
                             </div>
+
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="EnableBackgroundBlur" name="EnableBackgroundBlur" type="checkbox" is="emby-checkbox" data-embycheckbox="true" class="emby-checkbox">
+                                    <span class="checkboxLabel">Enable Background Blur</span>
+                                <span class="checkboxOutline"><span class="material-icons checkboxIcon checkboxIcon-checked check" aria-hidden="true"></span><span class="material-icons checkboxIcon checkboxIcon-unchecked " aria-hidden="true"></span></span></label>
+                                <div class="fieldDescription">Blur the background behind the preview while trailer is playing</div>
+                            </div>
                         </div>
                     </fieldset>
 
@@ -243,6 +262,7 @@
                     document.querySelector('#PreviewDurationMs').value = config.PreviewDurationMs || 30000;
 
                     // Hover Preview Customization
+                    document.querySelector('#PreviewPositioningMode').value = config.PreviewPositioningMode || 'Center';
                     document.querySelector('#PreviewOffsetX').value = config.PreviewOffsetX || 0;
                     document.querySelector('#PreviewOffsetY').value = config.PreviewOffsetY || 0;
                     document.querySelector('#PreviewSizingMode').value = config.PreviewSizingMode || 'Manual';
@@ -252,8 +272,10 @@
                     document.querySelector('#PreviewOpacity').value = config.PreviewOpacity || 0.9;
                     document.querySelector('#PreviewBorderRadius').value = config.PreviewBorderRadius || 8;
                     document.querySelector('#EnablePreviewAudio').checked = config.EnablePreviewAudio || false;
+                    document.querySelector('#EnableBackgroundBlur').checked = config.EnableBackgroundBlur || false;
 
-                    // Update sizing mode visibility
+                    // Update positioning and sizing mode visibility
+                    updatePositioningModeVisibility();
                     updateSizingModeVisibility();
 
                     // Debug Settings
@@ -276,6 +298,7 @@
                     config.PreviewDurationMs = parseInt(document.querySelector('#PreviewDurationMs').value) || 30000;
 
                     // Hover Preview Customization
+                    config.PreviewPositioningMode = document.querySelector('#PreviewPositioningMode').value || 'Center';
                     config.PreviewOffsetX = parseInt(document.querySelector('#PreviewOffsetX').value) || 0;
                     config.PreviewOffsetY = parseInt(document.querySelector('#PreviewOffsetY').value) || 0;
                     config.PreviewSizingMode = document.querySelector('#PreviewSizingMode').value || 'Manual';
@@ -285,6 +308,7 @@
                     config.PreviewOpacity = parseFloat(document.querySelector('#PreviewOpacity').value) || 0.9;
                     config.PreviewBorderRadius = parseInt(document.querySelector('#PreviewBorderRadius').value) || 8;
                     config.EnablePreviewAudio = document.querySelector('#EnablePreviewAudio').checked;
+                    config.EnableBackgroundBlur = document.querySelector('#EnableBackgroundBlur').checked;
 
                     // Debug Settings
                     config.EnableDebugLogging = document.querySelector('#EnableDebugLogging').checked;
@@ -320,6 +344,17 @@
                 }
             }
 
+            function updatePositioningModeVisibility() {
+                const positioningMode = document.querySelector('#PreviewPositioningMode').value;
+                const customPositionContainer = document.querySelector('#customPositionContainer');
+
+                if (positioningMode === 'Center') {
+                    customPositionContainer.style.display = 'none';
+                } else if (positioningMode === 'Custom') {
+                    customPositionContainer.style.display = 'block';
+                }
+            }
+
             document.querySelector("#HoverTrailerConfigPage").addEventListener("pageshow", () => {
                 loadConfiguration();
             });
@@ -332,6 +367,9 @@
 
             // Add event listener for sizing mode dropdown
             document.querySelector('#PreviewSizingMode').addEventListener('change', updateSizingModeVisibility);
+
+            // Add event listener for positioning mode dropdown
+            document.querySelector('#PreviewPositioningMode').addEventListener('change', updatePositioningModeVisibility);
         </script>
     </div>
 </body>

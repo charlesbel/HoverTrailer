@@ -44,6 +44,11 @@ public class PluginConfiguration : BasePluginConfiguration
     public string PreviewSizingMode { get; set; } = "FitContent";
 
     /// <summary>
+    /// Gets or sets the preview positioning mode (Center or Custom).
+    /// </summary>
+    public string PreviewPositioningMode { get; set; } = "Center";
+
+    /// <summary>
     /// Gets or sets the preview width in pixels (Manual mode).
     /// </summary>
     public int PreviewWidth { get; set; } = 300;
@@ -72,6 +77,11 @@ public class PluginConfiguration : BasePluginConfiguration
     /// Gets or sets whether to enable audio for trailer previews.
     /// </summary>
     public bool EnablePreviewAudio { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets whether to enable background blurring during trailer playback.
+    /// </summary>
+    public bool EnableBackgroundBlur { get; set; } = false;
 
     /// <summary>
     /// Gets or sets a value indicating whether to enable debug logging.
@@ -155,6 +165,13 @@ public class PluginConfiguration : BasePluginConfiguration
         {
             yield return "Preview Sizing Mode must be 'Manual', 'Percentage', or 'FitContent'";
         }
+
+        // Preview positioning mode validation
+        if (!string.Equals(PreviewPositioningMode, "Center", StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(PreviewPositioningMode, "Custom", StringComparison.OrdinalIgnoreCase))
+        {
+            yield return "Preview Positioning Mode must be 'Center' or 'Custom'";
+        }
     }
 
     /// <summary>
@@ -184,6 +201,7 @@ public class PluginConfiguration : BasePluginConfiguration
             nameof(PreviewBorderRadius) => ValidatePreviewBorderRadius(),
             nameof(PreviewSizePercentage) => ValidatePreviewSizePercentage(),
             nameof(PreviewSizingMode) => ValidatePreviewSizingMode(),
+            nameof(PreviewPositioningMode) => ValidatePreviewPositioningMode(),
             _ => null
         };
     }
@@ -252,6 +270,14 @@ public class PluginConfiguration : BasePluginConfiguration
             !string.Equals(PreviewSizingMode, "Percentage", StringComparison.OrdinalIgnoreCase) &&
             !string.Equals(PreviewSizingMode, "FitContent", StringComparison.OrdinalIgnoreCase))
             return "Preview Sizing Mode must be 'Manual', 'Percentage', or 'FitContent'";
+        return null;
+    }
+
+    private string? ValidatePreviewPositioningMode()
+    {
+        if (!string.Equals(PreviewPositioningMode, "Center", StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(PreviewPositioningMode, "Custom", StringComparison.OrdinalIgnoreCase))
+            return "Preview Positioning Mode must be 'Center' or 'Custom'";
         return null;
     }
 }

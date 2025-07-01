@@ -53,19 +53,39 @@ jobs:
         echo "CHECKSUM=$(md5sum HoverTrailer-${VERSION}-server.zip | cut -d' ' -f1)" >> $GITHUB_ENV
         echo "TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_ENV
 
-    - name: Extract Changelog Entry
-      run: |
-        # Extract changelog entry for current version if CHANGELOG.md exists
-        if [ -f "CHANGELOG.md" ]; then
-          changelog_entry=$(awk "/^## \[${VERSION}\]/{flag=1; next} /^## \[/{flag=0} flag" CHANGELOG.md | sed '/^$/d' | head -5 | tr '\n' ' ' | sed 's/["\\]/\\&/g')
-        else
-          changelog_entry=""
-        fi
+    - name: Generate Release Notes
+      id: release_notes
+      uses: actions/github-script@v7
+      with:
+        script: |
+          let previousTagName = null;
 
-        if [ -z "$changelog_entry" ]; then
-          changelog_entry="Release version ${VERSION}"
-        fi
-        echo "CHANGELOG_ENTRY=$changelog_entry" >> $GITHUB_ENV
+          try {
+            const { data: latestRelease } = await github.rest.repos.getLatestRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+            previousTagName = latestRelease.tag_name;
+          } catch (error) {
+            console.log('No previous release found, this will be the first release');
+          }
+
+          const { data } = await github.rest.repos.generateReleaseNotes({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            tag_name: `v${process.env.VERSION}`,
+            previous_tag_name: previousTagName
+          });
+
+          // Extract and clean the changelog for manifest
+          const changelog = data.body
+            .replace(/## What's Changed\n/, '')
+            .replace(/\*\*Full Changelog.*/, '')
+            .replace(/^(\* )/gm, '• ')
+            .trim()
+            .substring(0, 200);
+
+          core.exportVariable('CHANGELOG_ENTRY', changelog || `Release version ${process.env.VERSION}`);
 
     - name: Update Manifest
       run: |

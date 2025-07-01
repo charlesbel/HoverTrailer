@@ -368,6 +368,7 @@ public class HoverTrailerController : ControllerBase
 
     const HOVER_DELAY = {config.HoverDelayMs};
     const DEBUG_LOGGING = {config.EnableDebugLogging.ToString().ToLower()};
+    const PREVIEW_POSITIONING_MODE = '{config.PreviewPositioningMode}';
     const PREVIEW_OFFSET_X = {config.PreviewOffsetX};
     const PREVIEW_OFFSET_Y = {config.PreviewOffsetY};
     const PREVIEW_WIDTH = {config.PreviewWidth};
@@ -377,6 +378,7 @@ public class HoverTrailerController : ControllerBase
     const PREVIEW_SIZING_MODE = '{config.PreviewSizingMode}';
     const PREVIEW_SIZE_PERCENTAGE = {config.PreviewSizePercentage};
     const ENABLE_PREVIEW_AUDIO = {config.EnablePreviewAudio.ToString().ToLower()};
+    const ENABLE_BACKGROUND_BLUR = {config.EnableBackgroundBlur.ToString().ToLower()};
 
     let hoverTimeout;
     let currentPreview;
@@ -390,12 +392,61 @@ public class HoverTrailerController : ControllerBase
         }}
     }}
 
+    function applyBackgroundBlur() {{
+        if (!ENABLE_BACKGROUND_BLUR) return;
+
+        // Create or update backdrop blur element
+        let backdrop = document.getElementById('hover-trailer-backdrop');
+        if (!backdrop) {{
+            backdrop = document.createElement('div');
+            backdrop.id = 'hover-trailer-backdrop';
+            backdrop.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                background: rgba(0, 0, 0, 0.1);
+                z-index: 9999;
+                pointer-events: none;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            `;
+            document.body.appendChild(backdrop);
+        }}
+
+        // Fade in the backdrop
+        setTimeout(() => {{
+            backdrop.style.opacity = '1';
+        }}, 10);
+
+        log('Background blur applied');
+    }}
+
+    function removeBackgroundBlur() {{
+        if (!ENABLE_BACKGROUND_BLUR) return;
+
+        const backdrop = document.getElementById('hover-trailer-backdrop');
+        if (backdrop) {{
+            backdrop.style.opacity = '0';
+            setTimeout(() => {{
+                if (backdrop.parentNode) {{
+                    backdrop.parentNode.removeChild(backdrop);
+                }}
+            }}, 300);
+        }}
+
+        log('Background blur removed');
+    }}
+
     function createVideoPreview(trailerPath, cardElement) {{
         // Create container div for the video
         const container = document.createElement('div');
         const video = document.createElement('video');
 
-        // Get card position relative to viewport
+        // Get card position relative to viewport (needed for custom positioning)
         const cardRect = cardElement.getBoundingClientRect();
         const cardCenterX = cardRect.left + cardRect.width / 2;
         const cardCenterY = cardRect.top + cardRect.height / 2;
@@ -412,22 +463,46 @@ public class HoverTrailerController : ControllerBase
             containerHeight = PREVIEW_HEIGHT;
         }}
 
-        // Style the container
-        container.style.cssText = `
-            position: fixed;
-            top: calc(${{cardCenterY}}px + ${{PREVIEW_OFFSET_Y}}px);
-            left: calc(${{cardCenterX}}px + ${{PREVIEW_OFFSET_X}}px);
-            transform: translate(-50%, -50%);
-            width: ${{containerWidth}}px;
-            height: ${{containerHeight}}px;
-            border-radius: ${{PREVIEW_BORDER_RADIUS}}px;
-            overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-            z-index: 10000;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        `;
+        // Calculate positioning based on positioning mode
+        let containerStyles;
+        if (PREVIEW_POSITIONING_MODE === 'Center') {{
+            // Center the preview in the viewport
+            containerStyles = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: ${{containerWidth}}px;
+                height: ${{containerHeight}}px;
+                border-radius: ${{PREVIEW_BORDER_RADIUS}}px;
+                overflow: hidden;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+                z-index: 10000;
+                pointer-events: none;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            `;
+        }} else {{
+            // Custom positioning relative to card with offsets
+            containerStyles = `
+                position: fixed;
+                top: calc(${{cardCenterY}}px + ${{PREVIEW_OFFSET_Y}}px);
+                left: calc(${{cardCenterX}}px + ${{PREVIEW_OFFSET_X}}px);
+                transform: translate(-50%, -50%);
+                width: ${{containerWidth}}px;
+                height: ${{containerHeight}}px;
+                border-radius: ${{PREVIEW_BORDER_RADIUS}}px;
+                overflow: hidden;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+                z-index: 10000;
+                pointer-events: none;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            `;
+        }}
+
+        // Apply the container styles
+        container.style.cssText = containerStyles;
 
         // Style the video to fill the container
         video.style.cssText = `
@@ -466,6 +541,7 @@ public class HoverTrailerController : ControllerBase
 
                 video.addEventListener('loadeddata', () => {{
                     container.style.opacity = PREVIEW_OPACITY;
+                    applyBackgroundBlur();
                     video.play().catch(e => {{
                         log('Error playing video:', e.name + ': ' + e.message);
 
@@ -574,6 +650,7 @@ public class HoverTrailerController : ControllerBase
     function hidePreview() {{
         if (currentPreview) {{
             currentPreview.style.opacity = '0';
+            removeBackgroundBlur();
             setTimeout(() => {{
                 if (currentPreview && currentPreview.parentNode) {{
                     currentPreview.parentNode.removeChild(currentPreview);
