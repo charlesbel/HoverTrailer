@@ -355,7 +355,7 @@ public class HoverTrailerController : ControllerBase
         }
     }
 
-    /// <summary>
+/// <summary>
     /// Gets the hover trailer client script.
     /// </summary>
     /// <param name="config">The plugin configuration.</param>
@@ -535,15 +535,10 @@ public class HoverTrailerController : ControllerBase
                 }}
                 return response.json();
             }})
-            .then(trailerInfo => {
-                const trailerPath = trailerInfo.IsRemote 
-                    ? trailerInfo.Path 
-                    : `/Videos/${trailerInfo.Id}/stream`;
-            
+            .then(trailerInfo => {{
+                const trailerPath = trailerInfo.IsRemote ? trailerInfo.Path : `/Videos/${{trailerInfo.Id}}/stream`;
                 log('Using trailer path:', trailerPath);
-            
                 const container = createVideoPreview(trailerPath, element);
-            
                 const video = container.querySelector('video');
 
                 video.addEventListener('loadeddata', () => {{
