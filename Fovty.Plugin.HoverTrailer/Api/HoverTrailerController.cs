@@ -535,8 +535,15 @@ public class HoverTrailerController : ControllerBase
                 }}
                 return response.json();
             }})
-            .then(trailerInfo => {{
-                const container = createVideoPreview(`/Videos/${{trailerInfo.Id}}/stream`, element);
+            .then(trailerInfo => {
+                const trailerPath = trailerInfo.IsRemote 
+                    ? trailerInfo.Path 
+                    : `/Videos/${trailerInfo.Id}/stream`;
+            
+                log('Using trailer path:', trailerPath);
+            
+                const container = createVideoPreview(trailerPath, element);
+            
                 const video = container.querySelector('video');
 
                 video.addEventListener('loadeddata', () => {{
