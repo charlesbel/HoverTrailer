@@ -1,0 +1,87 @@
+/* Empêche le décalage de la page lors de l'apparition du flou */
+body {
+  overflow-y: scroll !important;
+}
+
+.hover-trailer-container {
+  position: fixed;
+  z-index: 10000;
+  /* La position top/left sera le centre de la carte, la transformation fait le reste */
+  transform: translate(-50%, -50%) scale(0.7);
+  transform-origin: center;
+  border-radius: 8px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  opacity: 0;
+  /* La transition inclut maintenant la transformation pour l'effet de zoom */
+  transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #000;
+}
+
+.hover-trailer-container.visible {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.hover-trailer-container video {
+  width: 100%;
+  height: 100%;
+  /* Cover garantit que la vidéo remplit le conteneur 16:9, en rognant les bords si besoin */
+  object-fit: cover;
+}
+
+.hover-trailer-loader {
+  border: 4px solid rgba(255, 255, 255, 0.2);
+  border-left-color: #fff;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.trailer-mute-button {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  background-color: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 16px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.hover-trailer-container:hover .trailer-mute-button {
+  opacity: 1;
+}
+
+#hover-trailer-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  background: rgba(0, 0, 0, 0.2);
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}

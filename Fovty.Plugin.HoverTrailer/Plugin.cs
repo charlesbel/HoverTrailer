@@ -5,8 +5,8 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Fovty.Plugin.HoverTrailer.Configuration;
-using Fovty.Plugin.HoverTrailer.Helpers;
 using Fovty.Plugin.HoverTrailer.Exceptions;
+using Fovty.Plugin.HoverTrailer.Helpers;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Plugins;
 using MediaBrowser.Controller.Configuration;
@@ -21,6 +21,8 @@ namespace Fovty.Plugin.HoverTrailer;
 /// </summary>
 public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
 {
+    private readonly ILogger<Plugin> _logger;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="Plugin"/> class.
     /// </summary>
@@ -36,207 +38,31 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
         : base(applicationPaths, xmlSerializer)
     {
         Instance = this;
+        _logger = logger;
 
         try
         {
-            LoggingHelper.LogInformation(logger, "HoverTrailer plugin is initializing...");
+            LoggingHelper.LogInformation(_logger, "HoverTrailer plugin is initializing...");
 
             // Validate configuration on startup
-            ValidateConfiguration(logger);
+            ValidateConfiguration();
 
-            // Initialize client script injection if enabled
+            // Handle client script injection if enabled
             if (Configuration.InjectClientScript)
             {
-                InitializeClientScriptInjection(applicationPaths, configurationManager, logger);
+                InitializeClientScriptInjection(applicationPaths);
             }
 
-            LoggingHelper.LogInformation(logger, "HoverTrailer plugin initialization completed successfully.");
+            LoggingHelper.LogInformation(_logger, "HoverTrailer plugin initialization completed successfully.");
         }
         catch (ConfigurationException ex)
         {
-            LoggingHelper.LogError(logger, "Configuration error during plugin initialization: {Message}", ex.Message);
-            LoggingHelper.LogDebug(logger, "Configuration error details: {Exception}", ex.ToString());
-            // Don't re-throw, allow plugin to load so config page is accessible.
+            LoggingHelper.LogError(_logger, "Configuration error during plugin initialization: {Message}", ex.Message);
         }
         catch (Exception ex)
         {
             LoggingHelper.LogError(logger, "Unexpected error during plugin initialization: {Message}", ex.Message);
-            LoggingHelper.LogDebug(logger, "Initialization error details: {Exception}", ex.ToString());
-            // Don't re-throw, allow plugin to load so config page is accessible.
-        }
-
-        // Log final configuration state after initialization
-        LoggingHelper.LogInformation(logger, "Plugin initialization completed. Configuration state:");
-        LoggingHelper.LogInformation(logger, "  EnableHoverPreview: {Value}", Configuration.EnableHoverPreview);
-        LoggingHelper.LogInformation(logger, "  InjectClientScript: {Value}", Configuration.InjectClientScript);
-        LoggingHelper.LogInformation(logger, "  HoverDelayMs: {Value}", Configuration.HoverDelayMs);
-        LoggingHelper.LogInformation(logger, "  PreviewOffsetX: {Value}", Configuration.PreviewOffsetX);
-        LoggingHelper.LogInformation(logger, "  PreviewOffsetY: {Value}", Configuration.PreviewOffsetY);
-        LoggingHelper.LogInformation(logger, "  PreviewWidth: {Value}", Configuration.PreviewWidth);
-        LoggingHelper.LogInformation(logger, "  PreviewHeight: {Value}", Configuration.PreviewHeight);
-        LoggingHelper.LogInformation(logger, "  PreviewOpacity: {Value}", Configuration.PreviewOpacity);
-        LoggingHelper.LogInformation(logger, "  PreviewBorderRadius: {Value}", Configuration.PreviewBorderRadius);
-        LoggingHelper.LogInformation(logger, "  EnableDebugLogging: {Value}", Configuration.EnableDebugLogging);
-    }
-
-    /// <summary>
-    /// Validates the plugin configuration and throws ConfigurationException if invalid.
-    /// </summary>
-    /// <param name="logger">Logger instance for debug output.</param>
-    private void ValidateConfiguration(ILogger<Plugin> logger)
-    {
-        try
-        {
-            LoggingHelper.LogDebug(logger, "Validating plugin configuration...");
-
-            if (!Configuration.IsValid())
-            {
-                var errors = Configuration.GetValidationErrors().ToList();
-                var errorMessage = string.Join("; ", errors);
-
-                LoggingHelper.LogError(logger, "Configuration validation failed: {ValidationErrors}", errorMessage);
-                throw new ConfigurationException($"Invalid plugin configuration: {errorMessage}");
-            }
-
-            LoggingHelper.LogDebug(logger, "Plugin configuration validation completed successfully.");
-        }
-        catch (ConfigurationException)
-        {
-            throw; // Re-throw configuration exceptions as-is
-        }
-        catch (Exception ex)
-        {
-            LoggingHelper.LogError(logger, "Unexpected error during configuration validation: {Message}", ex.Message);
-            throw new ConfigurationException("Failed to validate plugin configuration", ex);
-        }
-    }
-
-    /// <summary>
-    /// Initializes client script injection functionality.
-    /// </summary>
-    /// <param name="applicationPaths">Application paths for locating web files.</param>
-    /// <param name="configurationManager">Configuration manager for network settings.</param>
-    /// <param name="logger">Logger instance for debug output.</param>
-    private void InitializeClientScriptInjection(
-        IApplicationPaths applicationPaths,
-        IServerConfigurationManager configurationManager,
-        ILogger<Plugin> logger)
-    {
-        try
-        {
-            LoggingHelper.LogDebug(logger, "Initializing client script injection...");
-
-            if (string.IsNullOrWhiteSpace(applicationPaths.WebPath))
-            {
-                LoggingHelper.LogWarning(logger, "Web path is not available, skipping client script injection.");
-                return;
-            }
-
-            var indexFile = Path.Combine(applicationPaths.WebPath, "index.html");
-            if (!File.Exists(indexFile))
-            {
-                LoggingHelper.LogWarning(logger, "Index file not found at {IndexFile}, skipping client script injection.", indexFile);
-                return;
-            }
-
-            var basePath = GetBasePathFromConfiguration(configurationManager, logger);
-            ProcessIndexFileScriptInjection(indexFile, basePath, logger);
-
-            LoggingHelper.LogDebug(logger, "Client script injection initialization completed.");
-        }
-        catch (Exception ex)
-        {
-            LoggingHelper.LogError(logger, "Error during client script injection initialization: {Message}", ex.Message);
-            LoggingHelper.LogDebug(logger, "Script injection error details: {Exception}", ex.ToString());
-            throw new PluginInitializationException("Failed to initialize client script injection", ex);
-        }
-    }
-
-    /// <summary>
-    /// Retrieves the base path from Jellyfin's network configuration.
-    /// </summary>
-    /// <param name="configurationManager">Configuration manager instance.</param>
-    /// <param name="logger">Logger instance for debug output.</param>
-    /// <returns>The configured base path or empty string if unavailable.</returns>
-    private string GetBasePathFromConfiguration(IServerConfigurationManager configurationManager, ILogger<Plugin> logger)
-    {
-        try
-        {
-            LoggingHelper.LogDebug(logger, "Retrieving base path from network configuration...");
-
-            var networkConfig = configurationManager.GetConfiguration("network");
-            var configType = networkConfig.GetType();
-            var basePathField = configType.GetProperty("BaseUrl");
-            var confBasePath = basePathField?.GetValue(networkConfig)?.ToString()?.Trim('/');
-
-            var basePath = string.IsNullOrEmpty(confBasePath) ? "" : "/" + confBasePath;
-
-            LoggingHelper.LogDebug(logger, "Retrieved base path: '{BasePath}'", basePath);
-            return basePath;
-        }
-        catch (Exception ex)
-        {
-            LoggingHelper.LogWarning(logger, "Unable to get base path from network configuration, using default '/': {Message}", ex.Message);
-            LoggingHelper.LogDebug(logger, "Base path retrieval error details: {Exception}", ex.ToString());
-            return "";
-        }
-    }
-
-    /// <summary>
-    /// Processes the index.html file for script injection.
-    /// </summary>
-    /// <param name="indexFile">Path to the index.html file.</param>
-    /// <param name="basePath">Base path for script URL.</param>
-    /// <param name="logger">Logger instance for debug output.</param>
-    private void ProcessIndexFileScriptInjection(string indexFile, string basePath, ILogger<Plugin> logger)
-    {
-        try
-        {
-            LoggingHelper.LogDebug(logger, "Processing index file for script injection: {IndexFile}", indexFile);
-
-            string indexContents = File.ReadAllText(indexFile);
-            string scriptReplace = "<script plugin=\"HoverTrailer\".*?></script>";
-            string scriptElement = string.Format("<script plugin=\"HoverTrailer\" version=\"{1}\" src=\"{0}/HoverTrailer/ClientScript\" defer></script>", basePath, GetType().Assembly.GetName().Version?.ToString() ?? "Unknown");
-
-            if (indexContents.Contains(scriptElement))
-            {
-                LoggingHelper.LogInformation(logger, "Found HoverTrailer client script already injected in {IndexFile}", indexFile);
-                return;
-            }
-
-            LoggingHelper.LogInformation(logger, "Attempting to inject HoverTrailer script code in {IndexFile}", indexFile);
-
-            // Replace old HoverTrailer scripts
-            indexContents = Regex.Replace(indexContents, scriptReplace, "");
-
-            // Insert script last in body
-            int bodyClosing = indexContents.LastIndexOf("</body>");
-            if (bodyClosing == -1)
-            {
-                LoggingHelper.LogWarning(logger, "Could not find closing body tag in {IndexFile}, skipping script injection.", indexFile);
-                return;
-            }
-
-            indexContents = indexContents.Insert(bodyClosing, scriptElement);
-            File.WriteAllText(indexFile, indexContents);
-
-            LoggingHelper.LogInformation(logger, "Successfully injected HoverTrailer script code in {IndexFile}", indexFile);
-        }
-        catch (IOException ex)
-        {
-            LoggingHelper.LogError(logger, "File I/O error while processing {IndexFile}: {Message}", indexFile, ex.Message);
-            throw new PluginInitializationException($"Failed to modify index file: {indexFile}", ex);
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            LoggingHelper.LogError(logger, "Access denied while modifying {IndexFile}: {Message}", indexFile, ex.Message);
-            throw new PluginInitializationException($"Insufficient permissions to modify index file: {indexFile}", ex);
-        }
-        catch (Exception ex)
-        {
-            LoggingHelper.LogError(logger, "Unexpected error while processing {IndexFile}: {Message}", indexFile, ex.Message);
-            LoggingHelper.LogDebug(logger, "Index file processing error details: {Exception}", ex.ToString());
-            throw new PluginInitializationException($"Failed to process index file: {indexFile}", ex);
+            throw new PluginInitializationException("An unexpected error occurred during plugin initialization.", ex);
         }
     }
 
@@ -265,5 +91,103 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
                 EmbeddedResourcePath = string.Format(CultureInfo.InvariantCulture, "{0}.Configuration.configPage.html", GetType().Namespace)
             }
         ];
+    }
+
+    private void ValidateConfiguration()
+    {
+        try
+        {
+            LoggingHelper.LogDebug(_logger, "Validating plugin configuration...");
+            Configuration.Validate();
+            LoggingHelper.LogDebug(_logger, "Plugin configuration validation completed successfully.");
+        }
+        catch (ConfigurationException ex)
+        {
+            LoggingHelper.LogError(_logger, "Configuration validation failed: {ValidationErrors}", ex.Message);
+            // Re-throw to be caught in the constructor for logging
+            throw;
+        }
+    }
+
+    private void InitializeClientScriptInjection(IApplicationPaths applicationPaths)
+    {
+        try
+        {
+            LoggingHelper.LogDebug(_logger, "Initializing client script injection...");
+            var webPath = applicationPaths.WebPath;
+            if (string.IsNullOrWhiteSpace(webPath))
+            {
+                LoggingHelper.LogWarning(_logger, "Web path is not available, skipping client script injection.");
+                return;
+            }
+
+            var indexFile = Path.Combine(webPath, "index.html");
+            if (!File.Exists(indexFile))
+            {
+                LoggingHelper.LogWarning(_logger, "index.html not found at {IndexFile}, skipping script injection.", indexFile);
+                return;
+            }
+
+            ProcessIndexFileScriptInjection(indexFile);
+        }
+        catch (Exception ex)
+        {
+            LoggingHelper.LogError(_logger, "Error during client script injection: {Message}", ex.Message);
+            // Don't rethrow, allow server to start
+        }
+    }
+
+    private void ProcessIndexFileScriptInjection(string indexFile)
+    {
+        try
+        {
+            LoggingHelper.LogDebug(_logger, "Processing index file for script injection: {IndexFile}", indexFile);
+            var indexContents = File.ReadAllText(indexFile);
+
+            // Using a unique attribute to identify our injected block
+            const string injectionIdentifier = "data-plugin-hovertrailer";
+            if (indexContents.Contains(injectionIdentifier))
+            {
+                LoggingHelper.LogInformation(_logger, "HoverTrailer scripts already found in {IndexFile}. No changes made.", indexFile);
+                return;
+            }
+
+            // Remove any old script tags from previous versions to ensure a clean slate
+            indexContents = Regex.Replace(indexContents, @".*\s*", "", RegexOptions.Singleline);
+            indexContents = Regex.Replace(indexContents, @"<script plugin=""HoverTrailer"".*?></script>\s*", "", RegexOptions.Singleline);
+
+
+            var tagsToInject = @$"
+    <link rel=""stylesheet"" href=""https://cdn.jsdelivr.net/gh/charlesbel/HoverTrailer/web/slideshowpure.css"" {injectionIdentifier} />
+    <link rel=""stylesheet"" href=""https://cdn.jsdelivr.net/gh/charlesbel/HoverTrailer/web/hover_trailer.css"" />
+    <link rel=""stylesheet"" href=""https://cdn.jsdelivr.net/gh/charlesbel/HoverTrailer/web/zombie_revived.css"" />
+    <script async src=""https://cdn.jsdelivr.net/gh/charlesbel/HoverTrailer/web/slideshowpure.js""></script>
+    <script async src=""https://cdn.jsdelivr.net/gh/charlesbel/HoverTrailer/web/hover_trailer.js""></script>
+    ";
+
+            var headEndIndex = indexContents.LastIndexOf("</head>", StringComparison.OrdinalIgnoreCase);
+            if (headEndIndex == -1)
+            {
+                LoggingHelper.LogWarning(_logger, "Could not find closing </head> tag in {IndexFile}. Skipping injection.", indexFile);
+                return;
+            }
+
+            indexContents = indexContents.Insert(headEndIndex, tagsToInject);
+            File.WriteAllText(indexFile, indexContents);
+
+            LoggingHelper.LogInformation(_logger, "Successfully injected HoverTrailer scripts into {IndexFile}.", indexFile);
+        }
+        catch (IOException ex)
+        {
+            LoggingHelper.LogError(_logger, "File I/O error while processing {IndexFile}: {Message}", indexFile, ex.Message);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            LoggingHelper.LogError(_logger, "Access denied while modifying {IndexFile}: {Message}", indexFile, ex.Message);
+        }
+        catch (Exception ex)
+        {
+            LoggingHelper.LogError(_logger, "An unexpected error occurred while processing {IndexFile}: {Message}", indexFile, ex.Message);
+        }
     }
 }
