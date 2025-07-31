@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text; // Ajout important pour l'encodage
 using System.Text.RegularExpressions;
 using Fovty.Plugin.HoverTrailer.Configuration;
 using Fovty.Plugin.HoverTrailer.Exceptions;
@@ -61,7 +62,7 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
         }
         catch (Exception ex)
         {
-            LoggingHelper.LogError(logger, "Unexpected error during plugin initialization: {Message}", ex.Message);
+            LoggingHelper.LogError(logger, ex, "Unexpected error during plugin initialization.");
         }
     }
 
@@ -131,8 +132,7 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
         }
         catch (Exception ex)
         {
-            LoggingHelper.LogError(_logger, "Error during client script injection: {Message}", ex.Message);
-            // Don't rethrow, allow server to start
+            LoggingHelper.LogError(_logger, ex, "Error during client script injection.");
         }
     }
 
@@ -140,8 +140,8 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     {
         try
         {
-            LoggingHelper.LogDebug(_logger, "Processing index file for script injection: {IndexFile}", indexFile);
-            var indexContents = File.ReadAllText(indexFile);
+            // Étape 1: Lire le fichier en spécifiant explicitement l'encodage UTF-8
+            var indexContents = File.ReadAllText(indexFile, Encoding.UTF8);
 
             const string injectionIdentifier = "data-plugin-hovertrailer";
             if (indexContents.Contains(injectionIdentifier))
@@ -150,9 +150,8 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
                 return;
             }
 
-            // Clean up any old injections just in case
-            indexContents = Regex.Replace(indexContents, @".*?\s*", string.Empty, RegexOptions.Singleline);
-            indexContents = Regex.Replace(indexContents, @"<script plugin=""HoverTrailer"".*?></script>\s*", string.Empty, RegexOptions.Singleline);
+            // Nettoyage d'anciennes injections (au cas où)
+            indexContents = Regex.Replace(indexContents, @".*?\s*", string.Empty, RegexOptions.Singleline | RegexOptions.IgnoreCase);
 
             var tagsToInject = $@"
     <link rel=""stylesheet"" href=""https://cdn.jsdelivr.net/gh/charlesbel/HoverTrailer/web/slideshowpure.css"" {injectionIdentifier} />
@@ -162,7 +161,6 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     <script async src=""https://cdn.jsdelivr.net/gh/charlesbel/HoverTrailer/web/hover_trailer.js""></script>
     ";
 
-            // Use a robust Regex to find the closing head tag, ignoring whitespace and case.
             var headMatch = Regex.Match(indexContents, @"</\s*head\s*>", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
 
             if (!headMatch.Success)
@@ -172,21 +170,15 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
             }
 
             indexContents = indexContents.Insert(headMatch.Index, tagsToInject);
-            File.WriteAllText(indexFile, indexContents);
+
+            // Étape 2: Écrire le fichier en spécifiant explicitement l'encodage UTF-8
+            File.WriteAllText(indexFile, indexContents, Encoding.UTF8);
 
             LoggingHelper.LogInformation(_logger, "Successfully injected HoverTrailer scripts into {IndexFile}.", indexFile);
         }
-        catch (IOException ex)
-        {
-            LoggingHelper.LogError(_logger, "File I/O error while processing {IndexFile}: {Message}", indexFile, ex.Message);
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            LoggingHelper.LogError(_logger, "Access denied while modifying {IndexFile}: {Message}", indexFile, ex.Message);
-        }
         catch (Exception ex)
         {
-            LoggingHelper.LogError(_logger, "An unexpected error occurred while processing {IndexFile}: {Message}", indexFile, ex.Message);
+            LoggingHelper.LogError(_logger, ex, "An unexpected error occurred while processing {IndexFile}.", indexFile);
         }
     }
 }
