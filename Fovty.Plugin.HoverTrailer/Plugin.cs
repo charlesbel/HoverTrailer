@@ -62,7 +62,6 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
         catch (Exception ex)
         {
             LoggingHelper.LogError(logger, "Unexpected error during plugin initialization: {Message}", ex.Message);
-            throw new PluginInitializationException("An unexpected error occurred during plugin initialization.", ex);
         }
     }
 
@@ -83,14 +82,14 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     /// <inheritdoc />
     public IEnumerable<PluginPageInfo> GetPages()
     {
-        return
-        [
+        return new[]
+        {
             new PluginPageInfo
             {
-                Name = Name,
+                Name = this.Name,
                 EmbeddedResourcePath = string.Format(CultureInfo.InvariantCulture, "{0}.Configuration.configPage.html", GetType().Namespace)
             }
-        ];
+        };
     }
 
     private void ValidateConfiguration()
@@ -144,7 +143,6 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
             LoggingHelper.LogDebug(_logger, "Processing index file for script injection: {IndexFile}", indexFile);
             var indexContents = File.ReadAllText(indexFile);
 
-            // Using a unique attribute to identify our injected block
             const string injectionIdentifier = "data-plugin-hovertrailer";
             if (indexContents.Contains(injectionIdentifier))
             {
@@ -152,12 +150,11 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
                 return;
             }
 
-            // Remove any old script tags from previous versions to ensure a clean slate
-            indexContents = Regex.Replace(indexContents, @".*\s*", "", RegexOptions.Singleline);
-            indexContents = Regex.Replace(indexContents, @"<script plugin=""HoverTrailer"".*?></script>\s*", "", RegexOptions.Singleline);
+            // Clean up any old injections just in case
+            indexContents = Regex.Replace(indexContents, @".*?\s*", string.Empty, RegexOptions.Singleline);
+            indexContents = Regex.Replace(indexContents, @"<script plugin=""HoverTrailer"".*?></script>\s*", string.Empty, RegexOptions.Singleline);
 
-
-            var tagsToInject = @$"
+            var tagsToInject = $@"
     <link rel=""stylesheet"" href=""https://cdn.jsdelivr.net/gh/charlesbel/HoverTrailer/web/slideshowpure.css"" {injectionIdentifier} />
     <link rel=""stylesheet"" href=""https://cdn.jsdelivr.net/gh/charlesbel/HoverTrailer/web/hover_trailer.css"" />
     <link rel=""stylesheet"" href=""https://cdn.jsdelivr.net/gh/charlesbel/HoverTrailer/web/zombie_revived.css"" />
@@ -165,14 +162,16 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     <script async src=""https://cdn.jsdelivr.net/gh/charlesbel/HoverTrailer/web/hover_trailer.js""></script>
     ";
 
-            var headEndIndex = indexContents.LastIndexOf("</head>", StringComparison.OrdinalIgnoreCase);
-            if (headEndIndex == -1)
+            // Use a robust Regex to find the closing head tag, ignoring whitespace and case.
+            var headMatch = Regex.Match(indexContents, @"</\s*head\s*>", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
+
+            if (!headMatch.Success)
             {
                 LoggingHelper.LogWarning(_logger, "Could not find closing </head> tag in {IndexFile}. Skipping injection.", indexFile);
                 return;
             }
 
-            indexContents = indexContents.Insert(headEndIndex, tagsToInject);
+            indexContents = indexContents.Insert(headMatch.Index, tagsToInject);
             File.WriteAllText(indexFile, indexContents);
 
             LoggingHelper.LogInformation(_logger, "Successfully injected HoverTrailer scripts into {IndexFile}.", indexFile);
