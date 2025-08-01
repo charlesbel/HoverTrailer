@@ -154,11 +154,11 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
             indexContents = Regex.Replace(indexContents, @".*?\s*", string.Empty, RegexOptions.Singleline | RegexOptions.IgnoreCase);
 
             var tagsToInject = $@"
-    <link rel=""stylesheet"" href=""https://cdn.jsdelivr.net/gh/charlesbel/HoverTrailer/web/slideshowpure.css"" {injectionIdentifier} />
-    <link rel=""stylesheet"" href=""https://cdn.jsdelivr.net/gh/charlesbel/HoverTrailer/web/hover_trailer.css"" />
-    <link rel=""stylesheet"" href=""https://cdn.jsdelivr.net/gh/charlesbel/HoverTrailer/web/zombie_revived.css"" />
-    <script async src=""https://cdn.jsdelivr.net/gh/charlesbel/HoverTrailer/web/slideshowpure.js""></script>
-    <script async src=""https://cdn.jsdelivr.net/gh/charlesbel/HoverTrailer/web/hover_trailer.js""></script>
+    <link rel=""stylesheet"" href=""https://cdn.jsdelivr.net/gh/charlesbel/HoverTrailer@master/web/slideshowpure.css"" {injectionIdentifier} />
+    <link rel=""stylesheet"" href=""https://cdn.jsdelivr.net/gh/charlesbel/HoverTrailer@master/web/hover_trailer.css"" />
+    <link rel=""stylesheet"" href=""https://cdn.jsdelivr.net/gh/charlesbel/HoverTrailer@master/web/zombie_revived.css"" />
+    <script async src=""https://cdn.jsdelivr.net/gh/charlesbel/HoverTrailer@master/web/slideshowpure.js""></script>
+    <script async src=""https://cdn.jsdelivr.net/gh/charlesbel/HoverTrailer@master/web/hover_trailer.js""></script>
     ";
 
             var headMatch = Regex.Match(indexContents, @"</\s*head\s*>", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
