@@ -39,9 +39,9 @@ h4 {
 * {
   scrollbar-width: none;
 }
-#itemDetailPage .itemName.infoText.parentNameLast > bdi:nth-child(1) {
+/* #itemDetailPage .itemName.infoText.parentNameLast > bdi:nth-child(1) {
   display: none;
-}
+} */
 .hide + .detailPageWrapperContainer .itemName > bdi:nth-child(1) {
   display: block !important;
 }
@@ -612,7 +612,7 @@ imgLogoIcon {
   height: 50px !important;
 }
 .emby-tab-button {
-  display: inline-flex;
+  display: inline-flex !important;
 }
 .sectionTabs {
   width: 15em;
