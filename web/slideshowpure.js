@@ -15,9 +15,9 @@ const CONFIG = {
   minSwipeDistance: 50,
   loadingCheckInterval: 100,
   maxPlotLength: 360,
-  maxMovies: 15,
+  maxMovies: 100,
   maxTvShows: 15,
-  maxItems: 10,
+  maxItems: 100,
   preloadCount: 3,
   fadeTransitionDuration: 500,
 };
@@ -519,7 +519,7 @@ const ApiUtils = {
 
       console.log("Fetching random items from server...");
 
-      const yearsInterval = 5;
+      const yearsInterval = 10;
       const currentYear = new Date().getFullYear();
       const yearFilter = Array.from(
         { length: yearsInterval },
